@@ -85,6 +85,7 @@ namespace SELDLA
                 //args = @"--fasta=E:\temp\testpnye_ext1.fasta --vcf=E:\temp\testpnye_newpos.vcf --family=E:\temp\pnyererei.fam2 -o E:\temp\test2pnye --GQ=20 -r 100 --DP=5 --cs=3 --mode=duploid --noNewVcf --precleaned=E:\temp\test2pnye_clean.txt --MaxLdClusterOnly".Split(' ');
                 //args = @"--fasta=E:\temp\simfugu.fa --vcf=E:\temp\simfugu.vcf --family=E:\temp\simfugufam.txt -o E:\temp\simfugutemp --DP=5 -r 100 --cs=3 --mode=duploid --noNewVcf".Split(' ');
                 //args = @"--fasta=E:\temp\dpulex_v1.1_scaf.fasta --vcf=E:\temp\dpulex.all.vcf --family=E:\temp\dpulex.family.txt -o E:\temp\dpulex1 --cs=3 --mode=haploid --MaxLdClusterOnly --noNewVcf --precleaned=E:\temp\dpulex1_clean.txt --nl=0.8 -l 0.7 --RateOfNotNASNP=0.3 --RateOfNotNALD=0.9 --clmatch=0.9 -r 10000".Split(' ');
+                //args = @"--fasta=E:\temp\seldla-selfpoll\RSA_r2.0.fasta --vcf=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.vcf --family=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.family.txt -o E:\temp\seldla-selfpoll\selfpoll --cs=2 --mode=selfpollination --MaxLdClusterOnly --noNewVcf -r 1000".Split(' ');
                 //dotnet publish -c Release -f netcoreapp2.0 -r linux-x64 -o SELDLA/linux-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r win-x64 -o SELDLA/win-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r osx-x64 -o SELDLA/osx-x64

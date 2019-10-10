@@ -291,7 +291,7 @@ namespace SELDLA
                                 .AsOrdered()
                                 .Select(f => splitVcfRowHap(f, idord, opt_p, opt_b));
                 }
-                else if (mode == "selfpollination")
+                else //if (mode == "selfpollination")
                 {
                     datas = lines
                                 .AsParallel()
