@@ -1,0 +1,95 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v2.0",
+    "signature": "73bd47a0caa6b1b5a25d5e415c22c3f7161363fe"
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v2.0": {
+      "SELDLA/1.0.0": {
+        "dependencies": {
+          "Mono.Options": "5.3.0.1",
+          "NetBio.Core": "3.0.0-alpha",
+          "System.Drawing.Common": "4.5.1"
+        },
+        "runtime": {
+          "SELDLA.dll": {}
+        }
+      },
+      "Microsoft.Win32.SystemEvents/4.5.0": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Win32.SystemEvents.dll": {}
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/netcoreapp2.0/Microsoft.Win32.SystemEvents.dll": {
+            "rid": "win",
+            "assetType": "runtime"
+          }
+        }
+      },
+      "Mono.Options/5.3.0.1": {
+        "runtime": {
+          "lib/netstandard1.3/Mono.Options.dll": {}
+        }
+      },
+      "NetBio.Core/3.0.0-alpha": {
+        "runtime": {
+          "lib/netstandard2.0/Bio.Core.dll": {}
+        }
+      },
+      "System.Drawing.Common/4.5.1": {
+        "dependencies": {
+          "Microsoft.Win32.SystemEvents": "4.5.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/System.Drawing.Common.dll": {}
+        },
+        "runtimeTargets": {
+          "runtimes/unix/lib/netcoreapp2.0/System.Drawing.Common.dll": {
+            "rid": "unix",
+            "assetType": "runtime"
+          },
+          "runtimes/win/lib/netcoreapp2.0/System.Drawing.Common.dll": {
+            "rid": "win",
+            "assetType": "runtime"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SELDLA/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Win32.SystemEvents/4.5.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-K2TAr07pgl/m/J9ed3cmAzx0SD55kYuVfBG6SPRIH/ELTh/D2qGrjOWDQJo7r+LZl1nO2Nkl0UAQBUt6S2ewqQ==",
+      "path": "microsoft.win32.systemevents/4.5.0",
+      "hashPath": "microsoft.win32.systemevents.4.5.0.nupkg.sha512"
+    },
+    "Mono.Options/5.3.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-irTJcHgEoQRf+otUaCqpMv8D4npzdWpsD3PcdPJoj/T0KkQJMKcSzlzaaELZlzu9IVAZl/lyuhEmaT4t43BBPA==",
+      "path": "mono.options/5.3.0.1",
+      "hashPath": "mono.options.5.3.0.1.nupkg.sha512"
+    },
+    "NetBio.Core/3.0.0-alpha": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-RcyiZYcdAAjOUtVW64sDVgMX5ZfcnqJRbjnuF9mAe8NWsQIWsoo5B1c64Ij56IsCxmFashSqZq1csOMlOGN/iw==",
+      "path": "netbio.core/3.0.0-alpha",
+      "hashPath": "netbio.core.3.0.0-alpha.nupkg.sha512"
+    },
+    "System.Drawing.Common/4.5.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-RR9zs3qhIemEToSoCGZk8p/eox3NIYFrVSuIFJUUVr469+0f5zHJbGsZrzZSq6J1qmXnkaVv9d9t+05TGY9BHw==",
+      "path": "system.drawing.common/4.5.1",
+      "hashPath": "system.drawing.common.4.5.1.nupkg.sha512"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+C:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\bin\Debug\netcoreapp2.0\SELDLA.deps.json
+C:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\bin\Debug\netcoreapp2.0\SELDLA.runtimeconfig.json
+C:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\bin\Debug\netcoreapp2.0\SELDLA.runtimeconfig.dev.json
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\bin\Debug\netcoreapp2.0\SELDLA.dll
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\bin\Debug\netcoreapp2.0\SELDLA.pdb
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\obj\Debug\netcoreapp2.0\SELDLA.csprojAssemblyReference.cache
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\obj\Debug\netcoreapp2.0\SELDLA.csproj.CoreCompileInputs.cache
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\obj\Debug\netcoreapp2.0\SELDLA.AssemblyInfoInputs.cache
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\obj\Debug\netcoreapp2.0\SELDLA.AssemblyInfo.cs
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\obj\Debug\netcoreapp2.0\SELDLA.dll
+c:\Users\yoshi_000\Documents\Visual Studio Code\github\SELDLA\obj\Debug\netcoreapp2.0\SELDLA.pdb
