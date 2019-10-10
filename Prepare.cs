@@ -192,7 +192,7 @@ namespace SELDLA
                 {
                     families.Add(temp);
                 }
-                else if (mode == "haploid" && temp.Length >= 2)
+                else if ((mode == "haploid" || mode == "selfpollination") && temp.Length >= 2)
                 {
                     families.Add(temp);
                 }
@@ -227,15 +227,16 @@ namespace SELDLA
                 Dictionary<int, int> idord = new Dictionary<int, int>();
                 for (int j = 0; j < fam.Length; j++)
                 {
+                    //vcfに親の情報が無い場合でも頑張って動かすために、その時はfamily.txtファイルに親の名前として-1を入力するという意味？
                     if ((mode == "crossbreed" || mode == "duploid") && (j == 0 || j == 1) && fam[j] == "-1")
                     {
                         idord.Add(j, -1);
                     }
-                    else if (mode == "haploid" && j == 0 && fam[j] == "-1")
+                    else if ((mode == "haploid" || mode == "selfpollination") && j == 0 && fam[j] == "-1")
                     {
                         idord.Add(j, -1);
                     }
-                    else
+                    else //以下は普通に親もきちんとある場合？
                     {
                         for (int i = 9; i < header.Length; i++)
                         {
@@ -283,12 +284,19 @@ namespace SELDLA
                                 .AsOrdered()
                                 .Select(f => splitVcfRowDup(f, idord, opt_p, opt_b));
                 }
-                else
+                else if (mode == "haploid")
                 {
                     datas = lines
                                 .AsParallel()
                                 .AsOrdered()
                                 .Select(f => splitVcfRowHap(f, idord, opt_p, opt_b));
+                }
+                else if (mode == "selfpollination")
+                {
+                    datas = lines
+                                .AsParallel()
+                                .AsOrdered()
+                                .Select(f => splitVcfRowSelfPoll(f, idord, opt_p, opt_b));
                 }
                 int outline = 0;
                 foreach (string str in datas)
@@ -481,5 +489,65 @@ namespace SELDLA
             }
             return result;
         }
+
+        
+        public static string splitVcfRowSelfPoll(string[] vals, Dictionary<int, int> idord, double opt_p, double opt_b)
+        {
+            string result = "";
+            bool viewflag = true;
+            if (idord[0]!=-1 && vals[idord[0]] != "1") { viewflag = false; } //idord[0]==-1は親のVCFなしのはず
+            if (viewflag)
+            {
+                int n0 = 0;
+                int n1 = 0;
+                int n2 = 0;
+                int n = 0;
+                for (int i = 1; i < idord.Count; i++)
+                {
+                    n++;
+                    if (vals[idord[i]] == "0")
+                    {
+                        n0++;
+                    }
+                    else if (vals[idord[i]] == "1")
+                    {
+                        n1++;
+                    }
+                    else if (vals[idord[i]] == "2")
+                    {
+                        n2++;
+                    }
+                }
+                if ((n0 + n1 + n2) < n * opt_p || (n0 + n2) < n * opt_b || n1 < n * opt_b)
+                {
+                    viewflag = false;
+                }
+                else
+                {
+                    result = vals[0] + "\t" + vals[1];
+                    for (int i = 1; i < idord.Count; i++)
+                    {
+                        if (vals[idord[i]] == "0" || vals[idord[i]] == "-1")
+                        {
+                            result += "\t" + vals[idord[i]];
+                        }
+                        else if (vals[idord[i]] == "2")
+                        {
+                            result += "\t0";
+                        }
+                        else
+                        {
+                            result += "\t1";
+                        }
+                    }
+                }
+            }
+            if (!viewflag)
+            {
+                result = null;
+            }
+            return result;
+        }
+
     }
 }

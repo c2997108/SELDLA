@@ -14,6 +14,7 @@ namespace SELDLA
     {
         static void Main(string[] args)
         {
+            string version = "2.0.8";
             int opt_dp = 1;
             int opt_gq = 0;
             double opt_nonzerorate = 0.3;
@@ -60,7 +61,7 @@ namespace SELDLA
                 {"family=", "input family file <required>", v => inputfamily = v},
                 {"noNewVcf", "no converted vcf output with new position", v => nonewvcfout=v!=null},
                 {"precleaned=", "pre-calculated cleaned vcf file (if this option is used, input vcf is not used.)", v => precleaned = v},
-                {"mode=", "analysis mode (crossbreed, haploid, duploid) [crossbreed]", v => mode=v},
+                {"mode=", "analysis mode (crossbreed, haploid, duploid, selfpollination) [crossbreed]", v => mode=v},
                 {"MaxLdClusterOnly", "use max size LD cluster only", v => maxLdClusterOnly=v!=null},
                 {"RateOfNotNASNP=", "threshold of the ratio that is not NA with each other when comparing SNP at the clustering step [0.2]", (double v) => rateOfNotNASNP = v},
                 {"RateOfNotNALD=", "threshold of the ratio that is not NA with each other when comparing LD at the clustering step [0.4]", (double v) => rateOfNotNALD = v},
@@ -118,12 +119,12 @@ namespace SELDLA
                 Console.WriteLine("no input family");
                 showHelp=true;
             }
-            if(!(mode=="crossbreed"||mode=="haploid"||mode=="duploid")){
+            if(!(mode=="crossbreed"||mode=="haploid"||mode=="duploid"||mode=="selfpollination")){
                 Console.WriteLine("unrecognized mode");
             }
             
             if(showHelp){
-                Console.WriteLine("SELDLA ver2.0.7");
+                Console.WriteLine("SELDLA ver"+version);
                 p.WriteOptionDescriptions(Console.Out);
                 return;
             }
