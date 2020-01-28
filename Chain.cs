@@ -386,8 +386,8 @@ namespace SELDLA{
             num_ls=0;
             StreamWriter writer = new StreamWriter(opt_o+"_chain.txt");
             StreamWriter writerfa = new StreamWriter(opt_o+"_extended.fasta");
-            StreamWriter writerunloc = new StreamWriter(opt_o+"_unordered.fasta");
-            StreamWriter writerfanainchr = new StreamWriter(opt_o+"_include_unordered_in_chr.fasta");
+            StreamWriter writerunloc = new StreamWriter(opt_o+"_unoriented.fasta");
+            StreamWriter writerfanainchr = new StreamWriter(opt_o+"_include_unoriented_in_chr.fasta");
             int res_num_scaf = 0;
             int res_num_scaf_loc =0;
             int res_num_scaf_order =0;
@@ -445,7 +445,7 @@ namespace SELDLA{
                         writerfanainchr.Write(refseqs2[scaf.chr]);
                     }
                     if(scaf.order=="na"){
-                        writerunloc.WriteLine(">linkage_scaffold_"+num_ls+"_unordered_pos"+scaf.pos1+"_old_"+scaf.chr);
+                        writerunloc.WriteLine(">linkage_scaffold_"+num_ls+"_unoriented_pos"+scaf.pos1+"_old_"+scaf.chr);
                         writerunloc.WriteLine(refseqs2[scaf.chr]);
                         inChain.Add(scaf.chr);
                     }else{
@@ -482,15 +482,15 @@ namespace SELDLA{
             writerfanainchr.Close();
             StreamWriter txtwrite = new StreamWriter(opt_o+"_log.txt");
             string str="Total: "+res_num_scaf.ToString("N0")+" scaffolds, Located: "+res_num_scaf_loc.ToString("N0")
-            +" ("+((double)res_num_scaf_loc/res_num_scaf*100).ToString("F3")+"), Ordered: "
-            +res_num_scaf_order.ToString("N0")+" ("+((double)res_num_scaf_order/res_num_scaf*100).ToString("F3")+"), Ordered in >=1Mbp chr ("+num_big_ls+"): "
+            +" ("+((double)res_num_scaf_loc/res_num_scaf*100).ToString("F3")+"), Oriented: "
+            +res_num_scaf_order.ToString("N0")+" ("+((double)res_num_scaf_order/res_num_scaf*100).ToString("F3")+"), Oriented in >=1Mbp chr ("+num_big_ls+"): "
             +res_num_scaf_order_big.ToString("N0")+" ("+((double)res_num_scaf_order_big/res_num_scaf*100).ToString("F3")+")";
             Console.WriteLine(str);
             txtwrite.WriteLine(str);
 
             str="Total: "+res_bp_scaf.ToString("N0")+" bp, Located: "+res_bp_scaf_loc.ToString("N0")
-            +" ("+((double)res_bp_scaf_loc/res_bp_scaf*100).ToString("F3")+"), Ordered: "
-            +res_bp_scaf_order+" ("+((double)res_bp_scaf_order/res_bp_scaf*100).ToString("F3")+"), Ordered in >=1Mbp chr ("+num_big_ls+"): "
+            +" ("+((double)res_bp_scaf_loc/res_bp_scaf*100).ToString("F3")+"), Oriented: "
+            +res_bp_scaf_order+" ("+((double)res_bp_scaf_order/res_bp_scaf*100).ToString("F3")+"), Oriented in >=1Mbp chr ("+num_big_ls+"): "
             +res_bp_scaf_order_big+" ("+((double)res_bp_scaf_order_big/res_bp_scaf*100).ToString("F3")+")";
             Console.WriteLine(str);
             txtwrite.WriteLine(str);

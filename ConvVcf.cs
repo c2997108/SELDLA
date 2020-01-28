@@ -48,7 +48,7 @@ namespace SELDLA
                     newpos temp = new newpos();
                     if (values[2] == "na")
                     {
-                        temp.newchr = "linkage_scaffold_" + values[0] + "_unordered_pos" + values[3] +"_old_" + values[1];
+                        temp.newchr = "linkage_scaffold_" + values[0] + "_unoriented_pos" + values[3] +"_old_" + values[1];
                         temp.pos = 0;
                     }
                     else
@@ -71,7 +71,7 @@ namespace SELDLA
 
             System.IO.StreamReader file3 = new System.IO.StreamReader(inputvcf);
             System.IO.StreamWriter writer = new System.IO.StreamWriter(opt_o + "_newpos.vcf");
-            System.IO.StreamWriter writer2 = new System.IO.StreamWriter(opt_o + "_newpos_include_unordered_in_chr.vcf");
+            System.IO.StreamWriter writer2 = new System.IO.StreamWriter(opt_o + "_newpos_include_unoriented_in_chr.vcf");
             while ((line = file3.ReadLine()) != null)
             {
                 if (line.StartsWith("#"))

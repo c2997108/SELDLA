@@ -92,7 +92,7 @@ namespace SELDLA{
                         }
                         if (posold2new.ContainsKey(oldchr) && posold2new[oldchr].order == "na")
                         {
-                            writer.WriteLine("unordered_" + oldchr + "\t" + string.Join("\t", values));
+                            writer.WriteLine("unoriented_" + oldchr + "\t" + string.Join("\t", values));
                         }
                         else
                         {
