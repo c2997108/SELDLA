@@ -14,7 +14,7 @@ namespace SELDLA
     {
         static void Main(string[] args)
         {
-            string version = "2.0.8";
+            string version = "2.0.9";
             int opt_dp = 1;
             int opt_gq = 0;
             double opt_nonzerorate = 0.3;
@@ -39,6 +39,7 @@ namespace SELDLA
             string mode = "crossbreed";
             double rateOfNotNASNP = 0.2;
             double rateOfNotNALD = 0.4;
+            string removelqp = "no";
             //オプションとオプションの説明、そのオプションの引数に対するアクションを定義する
             var p = new OptionSet() {
                 //{"c|cpu=", "number of cpus", (int v) => opt_c = v},
@@ -65,6 +66,7 @@ namespace SELDLA
                 {"MaxLdClusterOnly", "use max size LD cluster only", v => maxLdClusterOnly=v!=null},
                 {"RateOfNotNASNP=", "threshold of the ratio that is not NA with each other when comparing SNP at the clustering step [0.2]", (double v) => rateOfNotNASNP = v},
                 {"RateOfNotNALD=", "threshold of the ratio that is not NA with each other when comparing LD at the clustering step [0.4]", (double v) => rateOfNotNALD = v},
+                {"RemoveLowQualityPhases=","remove low quality phases (yes/no) [no]", v => removelqp = v},
                 //VALUEをとらないオプションは以下のようにnullとの比較をしてTrue/Falseの値をとるようにする
                 {"h|help", "show help.", v => showHelp = v != null}
             };
@@ -86,6 +88,7 @@ namespace SELDLA
                 //args = @"--fasta=E:\temp\simfugu.fa --vcf=E:\temp\simfugu.vcf --family=E:\temp\simfugufam.txt -o E:\temp\simfugutemp --DP=5 -r 100 --cs=3 --mode=duploid --noNewVcf".Split(' ');
                 //args = @"--fasta=E:\temp\dpulex_v1.1_scaf.fasta --vcf=E:\temp\dpulex.all.vcf --family=E:\temp\dpulex.family.txt -o E:\temp\dpulex1 --cs=3 --mode=haploid --MaxLdClusterOnly --noNewVcf --precleaned=E:\temp\dpulex1_clean.txt --nl=0.8 -l 0.7 --RateOfNotNASNP=0.3 --RateOfNotNALD=0.9 --clmatch=0.9 -r 10000".Split(' ');
                 //args = @"--fasta=E:\temp\seldla-selfpoll\RSA_r2.0.fasta --vcf=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.vcf --family=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.family.txt -o E:\temp\seldla-selfpoll\selfpoll --cs=2 --mode=selfpollination --MaxLdClusterOnly --noNewVcf -r 1000".Split(' ');
+                //args = @"--fasta=E:\temp\suma\suma_draft_genome.fasta --vcf=E:\temp\suma\suma_second.vcf --family=E:\temp\suma\family_suma.txt -o E:\temp\suma\suma --noNewVcf".Split(' ');
                 //dotnet publish -c Release -f netcoreapp2.0 -r linux-x64 -o SELDLA/linux-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r win-x64 -o SELDLA/win-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r osx-x64 -o SELDLA/osx-x64
@@ -340,7 +343,7 @@ namespace SELDLA
                 while ((line = phfile.ReadLine()) != null){
                     numNR++;
                     string[] vals = line.Split("\t");
-                    if(vals[1]!="lowqual"){
+                    if(vals[1]!="lowqual" || removelqp != "yes"){
                         if (!datas.ContainsKey(vals[0]))
                         {
                             SortedDictionary<int, Dictionary<string, int[]>> chrdatas = new SortedDictionary<int, Dictionary<string, int[]>>();
