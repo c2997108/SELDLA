@@ -1,11 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
-using Mono.Options;
-using Bio;
-using Bio.IO;
 
 namespace SELDLA
 {
@@ -54,7 +50,7 @@ namespace SELDLA
                 if (counter == 0)
                 {
                     string[] header = line.Split("\t");
-                    Console.WriteLine(string.Join(", ", header));
+                    //Console.WriteLine(string.Join(", ", header));
                     writer = new StreamWriter(input + ".break");
                     writer.WriteLine("breakpoint\tstart\tend");
                     write_ph = new StreamWriter(input + ".ph");

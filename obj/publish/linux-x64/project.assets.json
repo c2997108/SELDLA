@@ -61,6 +61,51 @@
           }
         }
       }
+    },
+    ".NETCoreApp,Version=v3.1/linux-x64": {
+      "Microsoft.NETCore.Platforms/3.1.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/_._": {}
+        }
+      },
+      "Microsoft.Win32.SystemEvents/4.7.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "3.1.0"
+        },
+        "compile": {
+          "ref/netstandard2.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Win32.SystemEvents.dll": {}
+        }
+      },
+      "Mono.Options/6.6.0.161": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Mono.Options.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/Mono.Options.dll": {}
+        }
+      },
+      "System.Drawing.Common/4.7.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "3.1.0",
+          "Microsoft.Win32.SystemEvents": "4.7.0"
+        },
+        "compile": {
+          "ref/netcoreapp3.0/System.Drawing.Common.dll": {}
+        },
+        "runtime": {
+          "runtimes/unix/lib/netcoreapp3.0/System.Drawing.Common.dll": {}
+        }
+      }
     }
   },
   "libraries": {
@@ -183,7 +228,7 @@
       "projectName": "SELDLA",
       "projectPath": "C:\\Users\\c2997\\source\\repos\\SELDLA\\SELDLA.csproj",
       "packagesPath": "C:\\Users\\c2997\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\c2997\\source\\repos\\SELDLA\\obj\\",
+      "outputPath": "C:\\Users\\c2997\\source\\repos\\SELDLA\\obj\\publish\\linux-x64\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\c2997\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -229,12 +274,31 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Runtime.linux-x64",
+            "version": "[3.1.4, 3.1.4]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.linux-x64",
+            "version": "[3.1.4, 3.1.4]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Runtime.linux-x64",
+            "version": "[3.1.4, 3.1.4]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.202\\RuntimeIdentifierGraph.json"
+      }
+    },
+    "runtimes": {
+      "linux-x64": {
+        "#import": []
       }
     }
   }

@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using Mono.Options;
-using Bio;
-using Bio.IO;
 using System.Drawing.Drawing2D;
 using System.Drawing;
 

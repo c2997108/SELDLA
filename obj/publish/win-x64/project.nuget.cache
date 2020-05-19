@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "tv6rnORKFOak8OTq7NouknkzcR9hDozn59JJOGRu9QfRn+Zcu3x7KDq3dOHWhxml/9ws0hFZZFDvjaf2F9QWTg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\c2997\\source\\repos\\SELDLA\\SELDLA.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\c2997\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.0\\microsoft.netcore.platforms.3.1.0.nupkg.sha512",
+    "C:\\Users\\c2997\\.nuget\\packages\\microsoft.win32.systemevents\\4.7.0\\microsoft.win32.systemevents.4.7.0.nupkg.sha512",
+    "C:\\Users\\c2997\\.nuget\\packages\\mono.options\\6.6.0.161\\mono.options.6.6.0.161.nupkg.sha512",
+    "C:\\Users\\c2997\\.nuget\\packages\\system.drawing.common\\4.7.0\\system.drawing.common.4.7.0.nupkg.sha512",
+    "C:\\Users\\c2997\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\3.1.4\\microsoft.netcore.app.runtime.win-x64.3.1.4.nupkg.sha512",
+    "C:\\Users\\c2997\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\3.1.4\\microsoft.windowsdesktop.app.runtime.win-x64.3.1.4.nupkg.sha512",
+    "C:\\Users\\c2997\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\3.1.4\\microsoft.aspnetcore.app.runtime.win-x64.3.1.4.nupkg.sha512"
+  ],
+  "logs": []
+}

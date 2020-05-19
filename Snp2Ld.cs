@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using Mono.Options;
-using Bio;
-using Bio.IO;
 
 namespace SELDLA
 {
@@ -90,7 +87,7 @@ namespace SELDLA
                 if (counter == 1)
                 {
                     string[] header = line.Split("\t");
-                    Console.WriteLine(string.Join(", ", header));
+                    //Console.WriteLine(string.Join(", ", header));
                     writer = new StreamWriter(output);
                     writer.Write("#info");
                     for (int i = 0; i < header.Length; i++)
