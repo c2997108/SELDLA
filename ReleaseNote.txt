@@ -1,0 +1,12 @@
+﻿Release Note
+
+2.1.0
+- Visual Studio 2019に移行
+- オプションの説明をステップごとにまとめた
+
+
+
+
+-2.0.9 Visual Studio Codeで開発
+
+-1 Awkで開発
