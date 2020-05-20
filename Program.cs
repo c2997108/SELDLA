@@ -30,12 +30,14 @@ namespace SELDLA
             string inputfamily = "";
             bool showHelp = false;
             bool nonewvcfout = false;
-            bool maxLdClusterOnly = false;
+            bool maxLdClusterOnly = true;
             string precleaned = "";
             string mode = "crossbreed";
             double rateOfNotNASNP = 0.2;
             double rateOfNotNALD = 0.4;
             string removelqp = "no";
+            bool needSort = false;
+            int opt_ldseqnum = 2;
             //オプションとオプションの説明、そのオプションの引数に対するアクションを定義する
             var p = new OptionSet() {
                 //{"c|cpu=", "number of cpus", (int v) => opt_c = v},
@@ -44,14 +46,16 @@ namespace SELDLA
                 {"NonZeroSampleRate=", "exclude ambiquous SNP at the cleanupVcf step (0-1) [0.3]", (double v) => opt_nonzerorate = v},
                 {"p|hqsnp=", "high quality SNP rate at the splitVcf and Ld2Ph step [0.3]", (double v) => opt_p = v},
                 {"b|bal=", "0 / 1 balance at the splitVcf step [0.1]", (double v) => opt_b = v},
-                {"nl=", "near SNP match rate at the Snp2Ld step (0.5-1) [0.9]", (double v)=>opt_nc = v},
+                {"NeedSort","If the input vcf file is not sorted, use this option at the splitVcf step", v => needSort=v!=null},
+                { "nl=", "near SNP match rate at the Snp2Ld step (0.5-1) [0.9]", (double v)=>opt_nc = v},
                 {"r=", "the region to merge near SNP at the Snp2Ld step (bp) [10000]", (int v)=>opt_r =v},
                 {"RateOfNotNASNP=", "threshold of the ratio that is not NA with each other when comparing SNP at the Snp2Ld step [0.2]", (double v) => rateOfNotNASNP = v},
                 {"l|clmatch=", "cluster match rate at the Ld2Ph step [0.8]", (double v) => opt_cm = v},
                 {"cs=", "cluster size at the Ld2Ph step [2]", (int v) => opt_cs = v},
                 {"v|spmatch=", "split match rate at the Ld2Ph step (0.5-1) [0.7]", (double v) => opt_sm = v},
                 {"ldnum=", "the minimum number of same LD at the Ld2Ph step [1]", (int v) => opt_ldnum=v},
-                {"MaxLdClusterOnly", "use max size LD cluster only at the Ld2Ph step", v => maxLdClusterOnly=v!=null},
+                {"ldseqnum=", "the minimum number of consecutive LDs at the Ld2Ph step [1]", (int v) => opt_ldseqnum=v},
+                {"UseAllLDClusters", "use all LD clusters at the Ld2Ph step", v => maxLdClusterOnly=v==null},
                 {"RateOfNotNALD=", "threshold of the ratio that is not NA with each other when comparing LD at the LD2Ph step [0.4]", (double v) => rateOfNotNALD = v},
                 {"RemoveLowQualityPhases=","remove low quality phases after the LD2Ph step (yes/no) [no]", v => removelqp = v},
                 {"s|exmatch=", "extension match rate at the Chain step (0.5-1) [0.7]", (double v) => opt_s = v},
@@ -86,7 +90,7 @@ namespace SELDLA
                 //args = @"--fasta=E:\temp\dpulex_v1.1_scaf.fasta --vcf=E:\temp\dpulex.all.vcf --family=E:\temp\dpulex.family.txt -o E:\temp\dpulex1 --cs=3 --mode=haploid --MaxLdClusterOnly --noNewVcf --precleaned=E:\temp\dpulex1_clean.txt --nl=0.8 -l 0.7 --RateOfNotNASNP=0.3 --RateOfNotNALD=0.9 --clmatch=0.9 -r 10000".Split(' ');
                 //args = @"--fasta=E:\temp\seldla-selfpoll\RSA_r2.0.fasta --vcf=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.vcf --family=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.family.txt -o E:\temp\seldla-selfpoll\selfpoll --cs=2 --mode=selfpollination --MaxLdClusterOnly --noNewVcf -r 1000".Split(' ');
                 //args = @"--fasta=E:\temp\suma\suma_draft_genome.fasta --vcf=E:\temp\suma\suma_second.vcf --family=E:\temp\suma\family_suma.txt -o E:\temp\suma\suma --noNewVcf".Split(' ');
-                args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\sample_itoyo_1-100_head1m.txt --precleaned=C:\work\sample_itoyo_1-100_head1m.txt --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo --mode=haploid --noNewVcf --MaxLdClusterOnly -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
+                //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\sample_itoyo_1-100_head1m.txt --precleaned=C:\work\sample_itoyo_1-100_head1m.txt --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo2 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
                 //dotnet publish -c Release -f netcoreapp2.0 -r linux-x64 -o SELDLA/linux-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r win-x64 -o SELDLA/win-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r osx-x64 -o SELDLA/osx-x64
@@ -137,7 +141,7 @@ namespace SELDLA
                 return;
             }
 
-            Console.WriteLine("Run SELDLA " + version);
+            Console.WriteLine("Run SELDLA ver " + version);
 
             Prepare prep = new Prepare();
             if (precleaned == "")
@@ -145,12 +149,12 @@ namespace SELDLA
                 Console.WriteLine("Clean up VCF");
                 prep.cleanupVcf(inputvcf, opt_dp, opt_gq, opt_nonzerorate, opt_o);
                 Console.WriteLine("Split VCF into each family");
-                prep.splitVcf(opt_o + "_clean.txt", opt_o, inputfamily, opt_p, opt_b, mode);
+                prep.splitVcf(opt_o + "_clean.txt", opt_o, inputfamily, opt_p, opt_b, mode, needSort);
             }
             else
             {
                 Console.WriteLine("Split VCF into each family");
-                prep.splitVcf(precleaned, opt_o, inputfamily, opt_p, opt_b, mode);
+                prep.splitVcf(precleaned, opt_o, inputfamily, opt_p, opt_b, mode, needSort);
             }
 
             StreamReader file = new StreamReader(inputfamily);
@@ -186,7 +190,7 @@ namespace SELDLA
 
                 Ld2Ph ld = new Ld2Ph();
                 Console.WriteLine("Block to Phase in family No. " + num_fam);
-                ld.run2(opt_o + "_split_" + num_fam + ".txt.ld", opt_b, opt_cm, opt_cs, opt_sm, true, opt_ldnum, maxLdClusterOnly, rateOfNotNALD);
+                ld.run2(opt_o + "_split_" + num_fam + ".txt.ld", opt_b, opt_cm, opt_cs, opt_sm, true, opt_ldnum, maxLdClusterOnly, rateOfNotNALD, opt_ldseqnum);
 
                 int counter = 0;
                 file = new System.IO.StreamReader(opt_o + "_split_" + num_fam + ".txt.ld.break");
@@ -368,7 +372,7 @@ namespace SELDLA
 
                 Ld2Ph ld = new Ld2Ph();
                 Console.WriteLine("corrected Block to Phase in family No. " + i);
-                ld.run2(opt_o + "_split_" + i + ".txt.ld2", opt_b, opt_cm, opt_cs, opt_sm, false, opt_ldnum, maxLdClusterOnly, rateOfNotNALD);
+                ld.run2(opt_o + "_split_" + i + ".txt.ld2", opt_b, opt_cm, opt_cs, opt_sm, false, opt_ldnum, maxLdClusterOnly, rateOfNotNALD, opt_ldseqnum);
 
 
                 StreamReader phfile = new StreamReader(opt_o + "_split_" + i + ".txt.ld2.ph");

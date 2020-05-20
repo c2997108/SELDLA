@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Threading;
 
 namespace SELDLA
 {
     class Prepare
     {
+        static int cntSplitLines;
         public Prepare()
         {
             initialize();
@@ -17,50 +19,17 @@ namespace SELDLA
         public void cleanupVcf(string filename, int opt_dp, int opt_gq, double opt_nonzerorate, string opt_o)
         {
             StreamWriter writer = new StreamWriter(opt_o + "_clean.txt");
-            // System.IO.StreamReader file = new System.IO.StreamReader(filename);
-            // int counter = 0;
-            // string line;
-            // //List<string> lines=new List<string>();
-            // int outline=0;
-            // while ((line = file.ReadLine()) != null)
-            // {
-            //     if(!line.StartsWith("##")){
-            //         counter++;
-            //         if(counter==1){
-            //             //Console.WriteLine(line);
-            //             writer.WriteLine(line);
-            //         }else{
-            //             //lines.Add(line);
-            //             string str = cleanupRow(line,opt_dp, opt_gq, opt_nonzerorate);
-            //             if(str!=null){
-            //                 outline++;
-            //                 writer.WriteLine(str);
-            //             }
-            //         }
-            //     }
-            // }
-            // file.Close();
-            // Console.WriteLine("cleaned datas: "+outline);
-
-            // ParallelQuery<string> cleaned=lines
-            //                                 .AsParallel()
-            //                                 .AsOrdered()
-            //                                 .Select(f => cleanupRow(f, opt_dp, opt_gq, opt_nonzerorate));
             List<string> cleaned = GetRecordsFromFile(filename).AsParallel().AsOrdered().Select(x => cleanupRow(x, opt_dp, opt_gq, opt_nonzerorate)).ToList();
             Console.WriteLine("input datas: " + cleaned.Count());
-            cleaned = cleaned.Where(x => x != null).OrderBy(x => x.Split("\t")[0]).ThenBy(x => ParseInt(x.Split("\t")[1])).ToList();
+            //cleaned = cleaned.Where(x => x != null).OrderBy(x => x.Split("\t")[0]).ThenBy(x => ParseInt(x.Split("\t")[1])).ToList(); //split時にsortしているから不要
+            cleaned = cleaned.Where(x => x != null).ToList();
             Console.WriteLine("cleaned datas: " + cleaned.Count());
             foreach (string str in cleaned)
             {
-                //if (str != null)
-                //{
-                //Console.WriteLine(str);
                 writer.WriteLine(str);
-                //}
             }
             writer.Close();
         }
-
         private static int ParseInt(string str)
         {
             int result;
@@ -70,6 +39,7 @@ namespace SELDLA
             return result;
         }
 
+        ///<summary>こんな関数作らなくても、File.ReadLines(filename)で置き換えられるみたい。</summary>
         static IEnumerable<string> GetRecordsFromFile(string filename)
         {
             using (var streamReader = new StreamReader(filename))
@@ -176,7 +146,7 @@ namespace SELDLA
             }
         }
 
-        public void splitVcf(string input_clean, string opt_o, string inputfamily, double opt_p, double opt_b, string mode)
+        public void splitVcf(string input_clean, string opt_o, string inputfamily, double opt_p, double opt_b, string mode, bool needSort)
         {
             StreamReader file = new StreamReader(inputfamily);
             string line;
@@ -203,6 +173,7 @@ namespace SELDLA
             while ((line = vcffile.ReadLine()) != null)
             {
                 counter++;
+                if (counter%100000==0) { Console.WriteLine("read " + counter + " lines"); }
                 if (counter == 1)
                 {
                     header = line.Split("\t");
@@ -214,12 +185,16 @@ namespace SELDLA
             }
             vcffile.Close();
             Console.WriteLine("cleaned datas: " + lines.Count);
-            lines = lines.OrderBy(x => x[0]).ThenBy(x => Int32.Parse(x[1])).ToList();
+            if (needSort)
+            {
+                lines = lines.OrderBy(x => x[0]).ThenBy(x => Int32.Parse(x[1])).ToList();
+            }
 
             int num_fam = 0;
             foreach (string[] fam in families)
             {
                 num_fam++;
+                Console.WriteLine("Separating data of family " + num_fam);
                 Dictionary<int, int> idord = new Dictionary<int, int>();
                 for (int j = 0; j < fam.Length; j++)
                 {
@@ -305,6 +280,7 @@ namespace SELDLA
                     }
                 }
                 writer.Close();
+                lines.Clear();
                 Console.WriteLine("family " + num_fam + " datas: " + outline);
             }
 
@@ -312,6 +288,8 @@ namespace SELDLA
 
         public static string splitVcfRowCrossHap(string[] vals, Dictionary<int, int> idord, double opt_p, double opt_b)
         {
+            Interlocked.Increment(ref cntSplitLines);
+            if (cntSplitLines % 100000 == 0) { Console.WriteLine("splited " + cntSplitLines + " lines"); }
             string result = "";
             bool viewflag = true;
             if ((idord[0]!=-1 && vals[idord[0]] != "1") || (idord[1]!=-1 && vals[idord[1]] != "-1")) { viewflag = false; }
@@ -370,6 +348,8 @@ namespace SELDLA
 
         public static string splitVcfRowHap(string[] vals, Dictionary<int, int> idord, double opt_p, double opt_b)
         {
+            Interlocked.Increment(ref cntSplitLines);
+            if (cntSplitLines % 100000 == 0) { Console.WriteLine("splited " + cntSplitLines + " lines"); }
             string result = "";
             bool viewflag = true;
             if (idord[0]!=-1 && vals[idord[0]] != "1") { viewflag = false; }
@@ -428,6 +408,8 @@ namespace SELDLA
 
         public static string splitVcfRowDup(string[] vals, Dictionary<int, int> idord, double opt_p, double opt_b)
         {
+            Interlocked.Increment(ref cntSplitLines);
+            if (cntSplitLines % 100000 == 0) { Console.WriteLine("splited " + cntSplitLines + " lines"); }
             string result = "";
             bool viewflag = true;
             if ((idord[0]!=-1 && vals[idord[0]] != "1") || (idord[1]!=-1 && !(vals[idord[1]] == "0" || vals[idord[1]] == "2"))) { viewflag = false; }
@@ -489,6 +471,8 @@ namespace SELDLA
         
         public static string splitVcfRowSelfPoll(string[] vals, Dictionary<int, int> idord, double opt_p, double opt_b)
         {
+            Interlocked.Increment(ref cntSplitLines);
+            if (cntSplitLines % 100000 == 0) { Console.WriteLine("splited " + cntSplitLines + " lines"); }
             string result = "";
             bool viewflag = true;
             if (idord[0]!=-1 && vals[idord[0]] != "1") { viewflag = false; } //idord[0]==-1は親のVCFなしのはず

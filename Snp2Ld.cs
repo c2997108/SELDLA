@@ -102,6 +102,7 @@ namespace SELDLA
                     int num_people = values.Length - 2;
                     if (oldchr != values[0] && oldchr != "" && num > 0)
                     {
+                        Console.WriteLine("making blocks of " + oldchr);
                         ldsearch(oldchr, rateOfNotNA);
                         initialize();
                     }
@@ -112,12 +113,14 @@ namespace SELDLA
                     {
                         tempdata[i - 2] = Int32.Parse(values[i]);
                     }
+                    //dataとposがcontigごとの全データをため込む配列
                     data.Add(tempdata);
                     pos.Add(Int32.Parse(values[1]));
                 }
             }
             if (num > 0)
             {
+                Console.WriteLine("making blocks of " + oldchr);
                 ldsearch(oldchr, rateOfNotNA);
             }
 
@@ -130,26 +133,22 @@ namespace SELDLA
 
         public void ldsearch(string chr, double rateOfNotNA)
         {
-            int cpos = 0;
-            int cnum = 0;
+            int start_pos = 0;
             List<int[]> tempdata = new List<int[]>();
             List<int> temppos = new List<int>();
             for (int i = 0; i < num; i++)
             {
-                if (cpos == 0) { cpos = pos[i]; }
-                if (pos[i] <= cpos + th_r)
+                if (start_pos == 0) { start_pos = pos[i]; }
+                if (pos[i] <= start_pos + th_r)
                 {
                 }
                 else
                 {
                     clustsearch(tempdata, temppos, chr, rateOfNotNA);
-                    cpos = 0;
-                    cnum = 0;
                     tempdata = new List<int[]>();
                     temppos = new List<int>();
-                    cpos = pos[i];
+                    start_pos = pos[i];
                 }
-                cnum++;
                 tempdata.Add(data[i]);
                 temppos.Add(pos[i]);
             }
@@ -163,6 +162,7 @@ namespace SELDLA
             int[,] corder = new int[numdata, numdata];
             bool[,] flagclust = new bool[numdata, numdata];
             bool[] flagid = new bool[numdata];
+            //全SNP間の距離を計算
             for (int i = 0; i < numdata; i++)
             {
                 for (int j = 0; j < numdata; j++)
@@ -184,6 +184,7 @@ namespace SELDLA
                 }
             }
             List<int> maxmember = new List<int>();
+            //最大クラスターのSNP群を見つける
             for (int i = 0; i < numdata; i++)
             {
                 if (!flagid[i])
@@ -207,17 +208,14 @@ namespace SELDLA
                 tempcdata.Add(cdata[i]);
             }
             int[] cons = get_consensus(tempcdata, rateOfNotNA);
-            //Console.Write("sites: " + numdata + " in_cluster: " + maxmember.Count + "\t" + chr + "\t" + cpos[maxmember[0]]);
             int tempa = maxmember.Min(x=>cpos[x]);
             int tempb = maxmember.Max(x=>cpos[x]);
             writer.Write("sites: " + numdata + " in_cluster: " + maxmember.Count + " #"+maxmember.Min(x=>cpos[x]) +"#"+maxmember.Max(x=>cpos[x])
                              + "\t" + chr + "\t" + cpos[maxmember[0]]);
             foreach (int s in cons)
             {
-                //Console.Write("\t" + s);
                 writer.Write("\t" + s);
             }
-            //Console.WriteLine("");
             writer.WriteLine("");
         }
         public List<int> searchclust(bool[,] flagclust, bool[] flagid, int key)

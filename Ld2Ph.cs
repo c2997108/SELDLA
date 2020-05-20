@@ -31,7 +31,7 @@ namespace SELDLA
             public adatapos mystartdata;
             public adatapos myenddata;
         }
-        public void run2(string input, double opt_balance, double opt_cm, int opt_cs, double opt_sm, bool flagsplit, int opt_ldnum, bool maxLdClusterOnly, double rateOfNotNA)
+        public void run2(string input, double opt_balance, double opt_cm, int opt_cs, double opt_sm, bool flagsplit, int opt_ldnum, bool maxLdClusterOnly, double rateOfNotNA, int opt_ldseqnum)
         {
 
             opt_clust_match_rate = opt_cm;
@@ -64,7 +64,8 @@ namespace SELDLA
                     //string[] chrpos=values[0].Split(":");
                     if (oldchr != values[1] && oldchr != "" && num > 0)
                     {
-                        clustsearch2(data, pos, oldchr, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA);
+                        Console.WriteLine("calculating the phases of "+oldchr);
+                        clustsearch2(data, pos, oldchr, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA, opt_ldseqnum);
                         initialize();
                         start_data = new List<int>();
                         end_data = new List<int>();
@@ -95,7 +96,8 @@ namespace SELDLA
             //ファイルの最後のscaffoldのクラスターを検索
             if (num > 0)
             {
-                clustsearch2(data, pos, oldchr, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA);
+                Console.WriteLine("calculating the phases of " + oldchr);
+                clustsearch2(data, pos, oldchr, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA, opt_ldseqnum);
             }
 
             file.Close();
@@ -107,14 +109,14 @@ namespace SELDLA
         }
 
         public void clustsearch2(List<int[]> cdata, List<int> cpos, string chr, bool flagsplit, int opt_ldnum,
-         List<int> start_data, List<int> end_data, bool maxLdClusterOnly, double rateOfNotNA)
+         List<int> start_data, List<int> end_data, bool maxLdClusterOnly, double rateOfNotNA, int opt_ldseqnum)
         {
-            //Console.WriteLine("chr: " + chr);
+            //LD間の総当たり距離を計算し、クラスター化の準備を行う
             int numdata = cpos.Count;
             double[,] distmatrix = new double[numdata, numdata];
             int[,] corder = new int[numdata, numdata];
             bool[,] flagclust = new bool[numdata, numdata];
-            bool[] flagid = new bool[numdata];
+            bool[] skipflag = new bool[numdata];
             bool[,] flagclustat1 = new bool[numdata, numdata];
             for (int i = 0; i < numdata; i++)
             {
@@ -141,20 +143,22 @@ namespace SELDLA
                     }
                 }
             }
+            //閾値以下のクラスター数のLDは無視するフラグを付ける
             for (int i = 0; i < numdata; i++)
             {
                 if (getSameLdNum(i, flagclustat1, numdata) < opt_ldnum)
                 {
-                    flagid[i] = true;
+                    skipflag[i] = true;
                 }
             }
 
-            //最大クラスターのみ使用する場合
+            //最大クラスターのみ使用する場合、最大クラスター以外のLDにskipフラグを付ける
             if (maxLdClusterOnly && !flagsplit)
             {
-                bool[] forMaxClusterSearchFlag = flagid.Clone() as bool[];
+                bool[] forMaxClusterSearchFlag = skipflag.Clone() as bool[];
                 int tempMaxClusterSize = 0;
                 List<int> tempMaxClusterId = new List<int>();
+                //最大クラスターの探索
                 for (int i = 0; i < numdata; i++)
                 {
                     if (!forMaxClusterSearchFlag[i])
@@ -170,27 +174,27 @@ namespace SELDLA
                         }
                     }
                 }
+                //スキップフラグを付ける
                 for (int i = 0; i < numdata; i++)
                 {
                     if (!tempMaxClusterId.Contains(i))
                     {
-                        flagid[i] = true;
+                        skipflag[i] = true;
                     }
                 }
             }
 
-
-            //List<int> maxmember = new List<int>();
+            //フェーズ決定のためのインピュテーション、ブレークポイント探しなど
             List<enddatastruct> listends = new List<enddatastruct>();
             for (int i = 0; i < numdata; i++)
             {
-                if (!flagid[i])
+                if (!skipflag[i])
                 {
                     //scaffold内のクラスターを探索
-                    flagid[i] = true;
+                    skipflag[i] = true;
                     List<int> temp = new List<int>();
                     temp.Add(i);
-                    temp.AddRange(searchclust(flagclust, flagid, i));
+                    temp.AddRange(searchclust(flagclust, skipflag, i));
                     temp.Sort();
 
                     if (temp.Count >= opt_clust_size)
@@ -206,7 +210,7 @@ namespace SELDLA
                             tempstart.Add(start_data[j]);
                             tempend.Add(end_data[j]);
                         }
-                        datapos tempdatapos = get_imputed(templist, temppos, tempstart, tempend, rateOfNotNA);
+                        datapos tempdatapos = get_imputed(templist, temppos, tempstart, tempend, rateOfNotNA, opt_ldseqnum);
 
                         //フェーズの両端を探す
                         adatapos startdat = new adatapos();
@@ -331,6 +335,13 @@ namespace SELDLA
                 write_ph.WriteLine(chr + "\tlowqual\t" + cpos[cpos.Count - 1] + "\t" + arr2str(tempdata));
             }
         }
+        /// <summary>
+        /// 同じクラスターに属するLDの数を数える
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="flagclustat1"></param>
+        /// <param name="numdata"></param>
+        /// <returns></returns>
         public int getSameLdNum(int key, bool[,] flagclustat1, int numdata)
         {
             int res = 1;
@@ -343,44 +354,174 @@ namespace SELDLA
             }
             return res;
         }
-        public datapos get_imputed(List<int[]> cdata, List<int> cpos, List<int> start_data, List<int> end_data, double rateOfNotNA)
+        public datapos get_imputed(List<int[]> cdata, List<int> cpos, List<int> start_data, List<int> end_data, double rateOfNotNA, int opt_ldseqnum)
         {
             int[] tempcons = new int[cdata[0].Length];
             for (int j = 0; j < tempcons.Length; j++) { tempcons[j] = -1; }
 
             datapos phasedatapos = get_phased(cdata, cpos, start_data, end_data, rateOfNotNA);
             List<int[]> phaseddata = phasedatapos.mydata;
-            for (int i = 0; i < phaseddata.Count; i++)
+
+            for (int j = 0; j < tempcons.Length; j++)
             {
-                for (int j = 0; j < tempcons.Length; j++)
+                int[] tempPhValues = new int[phaseddata.Count];
+                List<int> tempSamePh = new List<int>();
+                int tempCurPh = -1;
+                int[] tempNumPh = new int[2]; //フェーズは0 or 1の2値
+                //閾値以上の連続する同じLDが存在するか調べる
+                for (int i = 0; i < phaseddata.Count; i++) { tempPhValues[i] = -1; }
+                for (int i = 0; i < phaseddata.Count; i++) 
                 {
                     if (phaseddata[i][j] != -1)
                     {
-                        tempcons[j] = phaseddata[i][j];
-                    }
-                    else if (phaseddata[i][j] == -1 && tempcons[j] != -1)
-                    {
-                        phaseddata[i][j] = tempcons[j];
+                        tempNumPh[phaseddata[i][j]]++;
+                        if (phaseddata[i][j] == tempCurPh)
+                        {
+                            tempSamePh.Add(i);
+                        }
+                        else
+                        {
+                            if (tempSamePh.Count >= opt_ldseqnum)
+                            {
+                                tempSamePh.ForEach(x => { tempPhValues[x] = tempCurPh; });
+                            }
+                            tempSamePh.Clear();
+                            tempSamePh.Add(i);
+                            tempCurPh = phaseddata[i][j];
+                        }
                     }
                 }
-            }
-            for (int i = phaseddata.Count - 1; i >= 0; i--)
-            {
-                for (int j = 0; j < tempcons.Length; j++)
+                if (tempSamePh.Count >= opt_ldseqnum)
                 {
-                    if (phaseddata[i][j] != -1)
+                    tempSamePh.ForEach(x => { tempPhValues[x] = tempCurPh; });
+                }
+
+                //インピュテーションを行う
+                int startImp = -1;
+                int endImp = -1;
+                int cntOfPh = 0;
+                for (int i = 0; i < phaseddata.Count; i++)
+                {
+                    if (startImp == -1 && tempPhValues[i] != -1)
                     {
-                        tempcons[j] = phaseddata[i][j];
+                        startImp = i;
+                        cntOfPh++;
                     }
-                    else if (phaseddata[i][j] == -1 && tempcons[j] != -1)
+                    else if (startImp > -1 && tempPhValues[i] != -1)
                     {
-                        phaseddata[i][j] = tempcons[j];
+                        endImp = i;
+                        if (endImp - startImp > 1)
+                        {
+                            for(int k = startImp + 1; k < endImp; k++)
+                            {
+                                if (phasedatapos.mypos[k] - phasedatapos.mypos[startImp] <= phasedatapos.mypos[endImp] - phasedatapos.mypos[k])
+                                {
+                                    tempPhValues[k] = tempPhValues[startImp];
+                                }
+                                else
+                                {
+                                    tempPhValues[k] = tempPhValues[endImp];
+                                }
+                            }
+                        }
+
+                        startImp = i;
+                        endImp = -1;
                     }
                 }
+                //閾値以上のフェーズがない場合は、最も多いフェーズで埋めておく
+                if (cntOfPh == 0) { 
+                    for (int i = 0; i < phaseddata.Count; i++) {
+                        if (tempNumPh[0] > tempNumPh[1]) 
+                        {
+                            tempPhValues[i] = 0;
+                        }else if (tempNumPh[1] > tempNumPh[0])
+                        {
+                            tempPhValues[i] = 1;
+                        }
+                        else
+                        {
+                            tempPhValues[i] = -1;
+                        }
+                    }
+                }
+                else
+                {
+                    //末端のフェーズを補完しておく
+                    int tempPhase = -1;
+                    for (int i = 0; i < phaseddata.Count; i++)
+                    {
+                        if ( tempPhValues[i] != -1)
+                        {
+                            tempPhase = tempPhValues[i];
+                        }
+                        else
+                        {
+                            tempPhValues[i] = tempPhase;
+                        }
+                    }
+                    tempPhase = -1;
+                    for (int i = phaseddata.Count-1; i >=0; i--)
+                    {
+                        if (tempPhValues[i] != -1)
+                        {
+                            tempPhase = tempPhValues[i];
+                        }
+                        else
+                        {
+                            tempPhValues[i] = tempPhase;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < phaseddata.Count; i++)
+                {
+                    phaseddata[i][j] = tempPhValues[i];
+                }
             }
+
+
+
+            //for (int i = 0; i < phaseddata.Count; i++)
+            //{
+            //    for (int j = 0; j < tempcons.Length; j++)
+            //    {
+            //        if (phaseddata[i][j] != -1)
+            //        {
+            //            tempcons[j] = phaseddata[i][j];
+            //        }
+            //        else if (phaseddata[i][j] == -1 && tempcons[j] != -1)
+            //        {
+            //            phaseddata[i][j] = tempcons[j];
+            //        }
+            //    }
+            //}
+            //for (int i = phaseddata.Count - 1; i >= 0; i--)
+            //{
+            //    for (int j = 0; j < tempcons.Length; j++)
+            //    {
+            //        if (phaseddata[i][j] != -1)
+            //        {
+            //            tempcons[j] = phaseddata[i][j];
+            //        }
+            //        else if (phaseddata[i][j] == -1 && tempcons[j] != -1)
+            //        {
+            //            phaseddata[i][j] = tempcons[j];
+            //        }
+            //    }
+            //}
             phasedatapos.mydata = phaseddata;
             return phasedatapos;
         }
+        /// <summary>
+        /// 与えられたLDのフェーズをそろえる
+        /// </summary>
+        /// <param name="cdata"></param>
+        /// <param name="cpos"></param>
+        /// <param name="start_data"></param>
+        /// <param name="end_data"></param>
+        /// <param name="rateOfNotNA"></param>
+        /// <returns></returns>
         public datapos get_phased(List<int[]> cdata, List<int> cpos, List<int> start_data, List<int> end_data, double rateOfNotNA)
         {
             datapos resultdatapos = new datapos();

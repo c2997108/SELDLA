@@ -17,3 +17,4 @@ C:\Users\c2997\source\repos\SELDLA\obj\Debug\netcoreapp3.1\SELDLA.csproj.CopyCom
 C:\Users\c2997\source\repos\SELDLA\obj\Debug\netcoreapp3.1\SELDLA.dll
 C:\Users\c2997\source\repos\SELDLA\obj\Debug\netcoreapp3.1\SELDLA.pdb
 C:\Users\c2997\source\repos\SELDLA\obj\Debug\netcoreapp3.1\SELDLA.genruntimeconfig.cache
+C:\Users\c2997\source\repos\SELDLA\obj\Debug\netcoreapp3.1\SELDLA.csprojAssemblyReference.cache
