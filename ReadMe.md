@@ -1,7 +1,10 @@
 ﻿# リリース手順
 
 - Visual Studio 2019のソリューションエクスプローラーで「SELDLA」を右クリックし、「発行」からWin, Mac, Linux用をそれぞれ発行する。
-- publish先のSELDLA/bin/Release/netcoreapp3.1/publishフォルダを開き、WSLを起動する。
+- publish先のSELDLA/bin/Release/netcoreapp3.1/publishフォルダを開き、WSLを起動し、後半のコマンドを打つが、簡略化して次で良い。
+  cd C:\Users\c2997\source\repos\SELDLA\bin\Release\netcoreapp3.1\publish
+  wsl
+  bash ../../../../publish.sh
 - WSLでzipコマンドを使うので、インストールしてなければ「sudo apt install zip」でインストールしておく。
 
 ```
@@ -11,6 +14,7 @@
 #dotnet.exe publish -c Release -f netcoreapp2.0 -r osx-x64 -o SELDLA/osx-x64
 
 ver=`cat ../../../../Program.cs|grep "string version ="|sed 's/.*= "//; s/".*//'`;
+rm -rf ~/temp-SELDLA
 mkdir -p ~/temp-SELDLA #NTFS上だとchmodが効かない
 mv win mac linux ~/temp-SELDLA
 cd ~/temp-SELDLA

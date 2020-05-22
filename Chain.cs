@@ -113,6 +113,10 @@ namespace SELDLA{
 
             sortedmatch.Sort();
             sortedmatch.Reverse();
+
+            Dictionary<(string, string, string, string), double> matchRateTable = new Dictionary<(string, string, string, string), double>();
+            sortedmatch.ForEach(x=>matchRateTable.Add((x.chr1,x.pos1,x.chr2,x.pos2),x.matchrate)); //chr1:end -> chr2:start方向は欠損したデータになっている
+
             List<chain> mainchains = new List<chain>();
             List<string> flagmainstart = new List<string>();
             List<string> flagmainend = new List<string>();
@@ -400,7 +404,8 @@ namespace SELDLA{
             long res_bp_scaf_order=0;
             long res_bp_scaf_order_big=0;
             List<string> inChain = new List<string>();
-            List<string> inChainWithOriented = new List<string>(); 
+            List<string> inChainWithOriented = new List<string>();
+            List<(int, string, string)> matchRateOrder = new List<(int, string, string)>();
             foreach(linkagescaf scafs in listlinkages){
                 num_ls++;
                 Console.WriteLine("#"+num_ls+" "+scafs.length);
@@ -444,6 +449,12 @@ namespace SELDLA{
                         datas[scaf.chr].ToList().ForEach(x => { x.Value["start"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
                         writer_chph.WriteLine();
                     }
+                    //一致率テーブルのためのインデックス作成
+                    if (scaf.order == "+" || scaf.order=="-")
+                    {
+                        matchRateOrder.Add((num_ls, scaf.chr, scaf.order));
+                    }
+
                     // if (scafs.length > 1000 * 1000)
                     // {
                     //     drawBpCm(g, 2, scaf, maxbp, maxcm, 0, 0);
@@ -519,6 +530,132 @@ namespace SELDLA{
             txtwrite.WriteLine(str);
             txtwrite.Close();
 
+            //一致率テーブル作成
+            StreamWriter writer_mtable = new StreamWriter(opt_o + "_match_rate");
+            writer_mtable.Write("#chr_contig_pos");
+            matchRateOrder.ForEach(x =>
+            {
+                if (x.Item3 == "+")
+                {
+                    writer_mtable.Write("\t" + x.Item1 + "_" + x.Item2 + "_s\t" + x.Item1 + "_" + x.Item2 + "_e");
+                }
+                else //x.Item3 == "-"のみ
+                {
+                    writer_mtable.Write("\t" + x.Item1 + "_" + x.Item2 + "_e\t" + x.Item1 + "_" + x.Item2 + "_s");
+                }
+            });
+            writer_mtable.WriteLine();
+            matchRateOrder.ForEach(x =>
+            {
+                if (x.Item3 == "+")
+                {
+                    writer_mtable.Write(x.Item1 + "_" + x.Item2 + "_s");
+                    matchRateOrder.ForEach(y =>
+                    {
+                        if(x.Item2==y.Item2)
+                        {
+                            writer_mtable.Write("\t1\t1");
+                        }
+                        else if (y.Item3 == "+") {
+                            double temp;
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                        else
+                        {
+                            double temp;
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                    });
+                    writer_mtable.WriteLine();
+                    writer_mtable.Write(x.Item1 + "_" + x.Item2 + "_e");
+                    matchRateOrder.ForEach(y =>
+                    {
+                        if (x.Item2 == y.Item2)
+                        {
+                            writer_mtable.Write("\t1\t1");
+                        }
+                        else if (y.Item3 == "+")
+                        {
+                            double temp;
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; } //end->startはデータがないため
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                        else
+                        {
+                            double temp;
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                    });
+                    writer_mtable.WriteLine();
+                }
+                else //x.Item3 == "-"のみ
+                {
+                    writer_mtable.Write(x.Item1 + "_" + x.Item2 + "_e");
+                    matchRateOrder.ForEach(y =>
+                    {
+                        if (x.Item2 == y.Item2)
+                        {
+                            writer_mtable.Write("\t1\t1");
+                        }
+                        else if (y.Item3 == "+")
+                        {
+                            double temp;
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                        else
+                        {
+                            double temp;
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                    });
+                    writer_mtable.WriteLine();
+                    writer_mtable.Write(x.Item1 + "_" + x.Item2 + "_s");
+                    matchRateOrder.ForEach(y =>
+                    {
+                        if (x.Item2 == y.Item2)
+                        {
+                            writer_mtable.Write("\t1\t1");
+                        }
+                        else if (y.Item3 == "+")
+                        {
+                            double temp;
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                        else
+                        {
+                            double temp;
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            writer_mtable.Write("\t" + temp);
+                        }
+                    });
+                    writer_mtable.WriteLine();
+                }
+            });
+            writer_mtable.Close();
+
+            //グラフ作成
             int per_width=250;
             int per_height=1000;
             int all_per_num=8;
