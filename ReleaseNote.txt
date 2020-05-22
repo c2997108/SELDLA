@@ -3,10 +3,14 @@
 2.1.0
 - Visual Studio 2019に移行
 - オプションの説明をステップごとにまとめた
+- --MaxLdClusterOnlyオプションをデフォルトにするように変更。もしMaxLdCluster以外も使う場合は、--UseAllLDClustersオプションを使用する。
+- インピュテーション時に閾値以上の連続するフェーズでのみ埋めるように変更
+- 入力ファイルをソートする処理をオプション扱いとした。再帰的にSELDLAを実行する場合などはソートオプションを付ける必要アリ。
 
 
 
+～2.0.9
+- Visual Studio Codeで開発
 
--2.0.9 Visual Studio Codeで開発
-
--1 Awkで開発
+～1
+- Awkで開発

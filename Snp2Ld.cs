@@ -126,7 +126,7 @@ namespace SELDLA
 
             file.Close();
             writer.Close();
-            System.Console.WriteLine("There were {0} lines.", counter);
+            //System.Console.WriteLine("There were {0} lines.", counter);
             // Suspend the screen.  
             // System.Console.ReadLine();
         }

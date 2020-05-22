@@ -90,7 +90,7 @@ namespace SELDLA
                 //args = @"--fasta=E:\temp\dpulex_v1.1_scaf.fasta --vcf=E:\temp\dpulex.all.vcf --family=E:\temp\dpulex.family.txt -o E:\temp\dpulex1 --cs=3 --mode=haploid --MaxLdClusterOnly --noNewVcf --precleaned=E:\temp\dpulex1_clean.txt --nl=0.8 -l 0.7 --RateOfNotNASNP=0.3 --RateOfNotNALD=0.9 --clmatch=0.9 -r 10000".Split(' ');
                 //args = @"--fasta=E:\temp\seldla-selfpoll\RSA_r2.0.fasta --vcf=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.vcf --family=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.family.txt -o E:\temp\seldla-selfpoll\selfpoll --cs=2 --mode=selfpollination --MaxLdClusterOnly --noNewVcf -r 1000".Split(' ');
                 //args = @"--fasta=E:\temp\suma\suma_draft_genome.fasta --vcf=E:\temp\suma\suma_second.vcf --family=E:\temp\suma\family_suma.txt -o E:\temp\suma\suma --noNewVcf".Split(' ');
-                //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\sample_itoyo_1-100_head1m.txt --precleaned=C:\work\sample_itoyo_1-100_head1m.txt --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo2 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
+                args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\sample_itoyo_1-100_head1m.txt --precleaned=C:\work\sample_itoyo_1-100_head1m.txt --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo2 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
                 //dotnet publish -c Release -f netcoreapp2.0 -r linux-x64 -o SELDLA/linux-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r win-x64 -o SELDLA/win-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r osx-x64 -o SELDLA/osx-x64
@@ -143,6 +143,7 @@ namespace SELDLA
 
             Console.WriteLine("Run SELDLA ver " + version);
 
+            //入力ファイルをフィルタリング、家系ごと(family.txtの行ごと)に分割
             Prepare prep = new Prepare();
             if (precleaned == "")
             {
@@ -179,6 +180,7 @@ namespace SELDLA
             }
             file.Close();
 
+            //1回目のフェージング　分割点を探すために行う
             int num_fam = 0;
             Dictionary<string, SortedDictionary<int, int>> breaks = new Dictionary<string, SortedDictionary<int, int>>();
             foreach (string[] fam in families)
@@ -226,21 +228,8 @@ namespace SELDLA
                 }
             }
 
-            // // Split at breakpoints
-            // ISequenceParser parser = new Bio.IO.FastA.FastAParser();
-            // // Parse the file.
-            // List<ISequence> sequences;
-            // using (parser.Open(inputfasta))
-            // {
-            //     sequences = parser.Parse().ToList();
-            // }
-
+            //FASTAを分割
             Dictionary<string, string> refseqs = new Dictionary<string, string>();
-            // foreach(ISequence seq in sequences){
-            //     string[] tempid = seq.ID.Split(" ");
-            //     refseqs.Add(tempid[0], Bio.Extensions.SequenceExtensions.ConvertToString(seq, 0, seq.Count));
-            //     //Console.WriteLine(seq.ID+":"+seq.Count);
-            // }
             StreamReader filefasta = new StreamReader(inputfasta);
             string inchr = "";
             StringBuilder insb = new StringBuilder();
@@ -265,7 +254,6 @@ namespace SELDLA
                 refseqs.Add(inchr, insb.ToString());
             }
             filefasta.Close();
-
 
             Console.WriteLine("Detect breakpoints");
             StreamWriter writer = new StreamWriter(opt_o + "_break.txt");
@@ -325,6 +313,7 @@ namespace SELDLA
             }
             writer.Close();
 
+            //2回目のフェージング
             Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> datas
              = new Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>>();
             for (int i = 1; i <= families.Count; i++)
@@ -379,6 +368,7 @@ namespace SELDLA
                 int numNR = 0;
                 while ((line = phfile.ReadLine()) != null)
                 {
+                    if (numNR == 0) { line = phfile.ReadLine(); } //ヘッダーを飛ばす
                     numNR++;
                     string[] vals = line.Split("\t");
                     if (vals[1] != "lowqual" || removelqp != "yes")
@@ -410,10 +400,13 @@ namespace SELDLA
                 }
                 phfile.Close();
             }
+
+            //連鎖するコンティグを伸ばしていく
             Chain cs = new Chain();
             Console.WriteLine("make linkage map...");
             cs.run(refseqs2, datas, opt_s, opt_nonzerophase, num_member, opt_o);
 
+            //新しい座標にVCFを変換する
             if (!nonewvcfout)
             {
                 ConvVcf cv = new ConvVcf();

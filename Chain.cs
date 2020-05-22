@@ -376,12 +376,18 @@ namespace SELDLA{
             if(finallinks.Count==0){
                 throw new Exception("There were no crossed chromosomes.");
             }
+
+            //結果ファイルの書き出し
             List<linkagescaf> listlinkages = finallinks.OrderByDescending(x=> x.length).ToList();
             double maxcm = listlinkages.Max(x=> x.scafs[x.scafs.Count-1].cm2);
             long maxbp = listlinkages.Max(x=> x.length);
             int num_big_ls = listlinkages.Where(x => x.length>1000*1000).Count();
             num_ls=0;
             StreamWriter writer = new StreamWriter(opt_o+"_chain.txt");
+            StreamWriter writer_chph = new StreamWriter(opt_o + "_chain_ph.txt");
+            writer_chph.Write("#chr\tname\tdirection\tstart_bp\tend_bp\tgenetical_start_cM\tgenetical_end_cM");
+            datas.Take(1).ToList()[0].Value.ToList().ForEach(x => { for (int i = 0; i < x.Value["start"].Length; i++) { writer_chph.Write("\tfamily_" + x.Key); } });
+            writer_chph.WriteLine();
             StreamWriter writerfa = new StreamWriter(opt_o+"_extended.fasta");
             StreamWriter writerunloc = new StreamWriter(opt_o+"_unoriented.fasta");
             StreamWriter writerfanainchr = new StreamWriter(opt_o+"_include_unoriented_in_chr.fasta");
@@ -411,19 +417,38 @@ namespace SELDLA{
                 //     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                 //     drawChrBase(g, maxbp, maxcm, 2, num_ls, scafs.length, scafs.scafs[scafs.scafs.Count-1].cm2, 0, 0);
                 // }
-                foreach(scafpos scaf in scafs.scafs){
+                foreach (scafpos scaf in scafs.scafs) {
                     num_scaf++;
                     res_num_scaf++;
-                    res_bp_scaf+=refseqs2[scaf.chr].Length;
+                    res_bp_scaf += refseqs2[scaf.chr].Length;
                     res_num_scaf_loc++;
-                    res_bp_scaf_loc+=refseqs2[scaf.chr].Length;
+                    res_bp_scaf_loc += refseqs2[scaf.chr].Length;
                     //Console.WriteLine(num_ls+"\t"+ scaf.chr+"\t"+scaf.order+"\t"+scaf.pos1+"\t"+scaf.pos2+"\t"+scaf.cm1+"\t"+scaf.cm2);
-                    writer.WriteLine(num_ls+"\t"+ scaf.chr+"\t"+scaf.order+"\t"+scaf.pos1+"\t"+scaf.pos2+"\t"+scaf.cm1+"\t"+scaf.cm2);
+                    writer.WriteLine(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                    //フェーズ付きチェインファイル作成
+                    if (scaf.order == "+" || scaf.order == "na")
+                    {
+                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        datas[scaf.chr].ToList().ForEach(x => { x.Value["start"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.WriteLine();
+                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        datas[scaf.chr].ToList().ForEach(x => { x.Value["end"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.WriteLine();
+                    }
+                    else
+                    {
+                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        datas[scaf.chr].ToList().ForEach(x => { x.Value["end"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.WriteLine();
+                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        datas[scaf.chr].ToList().ForEach(x => { x.Value["start"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.WriteLine();
+                    }
                     // if (scafs.length > 1000 * 1000)
                     // {
                     //     drawBpCm(g, 2, scaf, maxbp, maxcm, 0, 0);
                     // }
-                    if(num_scaf>1){
+                    if (num_scaf>1){
                         for(int i=0;i<nbp;i++){
                             writerfa.Write("N");
                             writerfanainchr.Write("N");
@@ -474,6 +499,7 @@ namespace SELDLA{
                 }
             }
             writer.Close();
+            writer_chph.Close();
             writerfa.Close();
             writerunloc.Close();
             writerfanainchr.Close();

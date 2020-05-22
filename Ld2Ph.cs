@@ -12,6 +12,7 @@ namespace SELDLA
         public int opt_clust_size = 2;
         public double opt_split_match_rate = 0.7;
         public StreamWriter write_ph;
+        public StreamWriter write_ldimp;
         public struct datapos
         {
             public List<int[]> mydata;
@@ -54,6 +55,11 @@ namespace SELDLA
                     writer = new StreamWriter(input + ".break");
                     writer.WriteLine("breakpoint\tstart\tend");
                     write_ph = new StreamWriter(input + ".ph");
+                    write_ph.Write("#chr\tnum_of_split/quality\tLD_start_pos");
+                    line.Split("\t").Skip(3).ToList().ForEach(x=>write_ph.Write("\t"+x));
+                    write_ph.WriteLine();
+                    write_ldimp = new StreamWriter(input + "imp");
+                    write_ldimp.WriteLine(line);
                 }
                 else
                 {
@@ -103,7 +109,8 @@ namespace SELDLA
             file.Close();
             writer.Close();
             write_ph.Close();
-            System.Console.WriteLine("There were {0} lines.", counter);
+            write_ldimp.Close();
+            //System.Console.WriteLine("There were {0} lines.", counter);
             // Suspend the screen.  
             // System.Console.ReadLine();
         }
@@ -211,6 +218,15 @@ namespace SELDLA
                             tempend.Add(end_data[j]);
                         }
                         datapos tempdatapos = get_imputed(templist, temppos, tempstart, tempend, rateOfNotNA, opt_ldseqnum);
+                        foreach(var item in tempdatapos.mypos.Select((Value, Index) => new { Value, Index }))
+                        {
+                            write_ldimp.Write("info\t" + chr + "\t" + item.Value);
+                            foreach(var item2 in tempdatapos.mydata[item.Index])
+                            {
+                                write_ldimp.Write("\t" + item2);
+                            }
+                            write_ldimp.WriteLine();
+                        }
 
                         //フェーズの両端を探す
                         adatapos startdat = new adatapos();
@@ -481,7 +497,7 @@ namespace SELDLA
             }
 
 
-
+            //ver2.0.9までのインピュテーション
             //for (int i = 0; i < phaseddata.Count; i++)
             //{
             //    for (int j = 0; j < tempcons.Length; j++)
