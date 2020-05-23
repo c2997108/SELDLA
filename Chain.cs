@@ -826,9 +826,24 @@ namespace SELDLA{
                                 gall.FillRectangle(myBrush2, 100 + hmunit * (cntScafLenX - w.Item1), 2100 - hmunit * (cntScafLenY), hmunit * w.Item1, hmunit * z.Item1);
                             }
                         });
+                    }
+                    else
+                    {
+                        gall.FillRectangle(myBrush2, 100, 2100 - hmunit * (cntScafLenY), 2000, hmunit * z.Item1);
+                    }
+                });
+                //線を引く
+                orientedScafNumY = 0;
+                cntScafLenY = 0;
+                scafLenInChrList.ForEach(z =>
+                {
+                    cntScafLenY += z.Item1;
+                    if (z.Item2 == "+-")
+                    {
+                        orientedScafNumY++;
                         heatmap_chr_border.Select((x, i) => (x, i)).ToList().ForEach(w =>
                         {
-                            if(w.x== orientedScafNumY - 1)
+                            if (w.x == orientedScafNumY - 1)
                             {
                                 gall.DrawLine(pen, 100 + hmunit * (cntScafLenY - z.Item1), 100, 100 + hmunit * (cntScafLenY - z.Item1), 2100);
                                 gall.DrawLine(pen, 100, 2100 - hmunit * (cntScafLenY - z.Item1), 2100, 2100 - hmunit * (cntScafLenY - z.Item1));
@@ -837,13 +852,8 @@ namespace SELDLA{
                             }
                         });
                     }
-                    else
-                    {
-                        gall.FillRectangle(myBrush2, 100, 2100 - hmunit * (cntScafLenY), 2000, hmunit * z.Item1);
-                    }
                 });
 
-                
                 imageall.Save(opt_o + "_heatmap_phase_physical.png");
             }
             catch (Exception e)

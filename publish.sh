@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ver=`cat ../../../../Program.cs|grep "string version ="|sed 's/.*= "//; s/".*//'`;
+rm -rf ~/temp-SELDLA
 mkdir -p ~/temp-SELDLA
 mv win mac linux ~/temp-SELDLA
 cd ~/temp-SELDLA
