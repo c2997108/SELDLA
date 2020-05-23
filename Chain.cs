@@ -406,6 +406,8 @@ namespace SELDLA{
             List<string> inChain = new List<string>();
             List<string> inChainWithOriented = new List<string>();
             List<(int, string, string)> matchRateOrder = new List<(int, string, string)>();
+            List<(int, string)> scafLenInChrList = new List<(int, string)>();
+            int totalScafLen = 0;
             foreach(linkagescaf scafs in listlinkages){
                 num_ls++;
                 Console.WriteLine("#"+num_ls+" "+scafs.length);
@@ -450,10 +452,18 @@ namespace SELDLA{
                         writer_chph.WriteLine();
                     }
                     //一致率テーブルのためのインデックス作成
+                    //ヒートマップのためのscaffoldの長さ保存
+                    totalScafLen += refseqs2[scaf.chr].Length;
                     if (scaf.order == "+" || scaf.order=="-")
                     {
                         matchRateOrder.Add((num_ls, scaf.chr, scaf.order));
+                        scafLenInChrList.Add((refseqs2[scaf.chr].Length, "+-"));
                     }
+                    else
+                    {
+                        scafLenInChrList.Add((refseqs2[scaf.chr].Length, "na"));
+                    }
+                    
 
                     // if (scafs.length > 1000 * 1000)
                     // {
@@ -666,6 +676,7 @@ namespace SELDLA{
             writer_mtable.Close();
 
             //グラフ作成　連鎖地図
+            Console.WriteLine("Drawing genetical and phisycal map...");
             int per_width=250;
             int per_height=1000;
             int all_per_num=8;
@@ -694,7 +705,7 @@ namespace SELDLA{
             }
 
             //グラフ作成　ヒートマップ
-            Console.WriteLine("Drawing heatmap... If you don't need it, you can stop.");
+            Console.WriteLine("Drawing heatmap...");
             try
             {
                 var imageall = new Bitmap(1200,1200);
@@ -732,6 +743,108 @@ namespace SELDLA{
                     gall.DrawString((z.i+1).ToString(), myfont, Brushes.Black, new Point((int)(100 + z.x * 2 * hmunit) + 10, 1130));
                 });
                 imageall.Save(opt_o + "_heatmap_phase.png");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            //グラフ作成　ヒートマップ物理距離対応版
+            try
+            {
+                var imageall = new Bitmap(2200, 2200);
+                var gall = Graphics.FromImage(imageall);
+                gall.SmoothingMode = SmoothingMode.AntiAlias;
+                gall.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                gall.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                System.Drawing.SolidBrush myBrush = new System.Drawing.SolidBrush(Color.White);
+                System.Drawing.SolidBrush myBrush2 = new System.Drawing.SolidBrush(Color.LightGray);
+                gall.FillRectangle(myBrush, 0, 0, 2200, 2200);
+                float hmunit = 2000 / (float)totalScafLen;
+                double[,] matchAllData = new double[matchRateOrder.Count * 2, matchRateOrder.Count * 2];
+                
+                File.ReadLines(opt_o + "_match_rate").Select((line, y) => (line, y)).ToList().ForEach(z =>
+                {
+                    if (z.y > 0)
+                    {
+                        z.line.Split("\t").Skip(1).Select((item, x) => (item, x)).ToList().ForEach(w =>
+                        {
+                            //Console.WriteLine(w.x + " " + z.y + " " + matchRateOrder.Count);
+                            matchAllData[w.x, z.y - 1] = double.Parse(w.item);
+                        });
+                    }
+                });
+                var pen = new Pen(Color.Black);
+                Font myfont = new Font("Tahoma", 20);
+                int orientedScafNumY = 0;
+                int cntScafLenY = 0;
+                scafLenInChrList.ForEach(z =>
+                {
+                    int orientedScafNumX = 0;
+                    int cntScafLenX = 0;
+                    cntScafLenY += z.Item1;
+                    if (z.Item2 == "+-")
+                    {
+                        orientedScafNumY++;
+                        scafLenInChrList.ForEach(w =>
+                        {
+                            cntScafLenX += w.Item1;
+                            if (w.Item2 == "+-")
+                            {
+                                orientedScafNumX++;
+                                double itemtmp=0;
+                                //Console.WriteLine((2 * orientedScafNumX - 2) + " " + (2 * orientedScafNumY - 2) + " " + scafLenInChrList.Count);
+                                itemtmp = matchAllData[2 * orientedScafNumX - 2, 2 * orientedScafNumY - 2];
+                                if (itemtmp < 0.5) { itemtmp = 0.5; }
+                                itemtmp = (itemtmp - 0.5) * 2;
+                                //myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(255 * (1 - itemtmp)), 255, (int)(255 * (1 - itemtmp))));
+                                myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(itemtmp * 255), Color.Green));
+                                gall.FillRectangle(myBrush, 100 + hmunit * (cntScafLenX - w.Item1), 2100 - hmunit * (cntScafLenY - z.Item1 / (float)2), hmunit * w.Item1/(float)2, hmunit * z.Item1/(float)2);
+
+                                itemtmp = matchAllData[2 * orientedScafNumX - 1, 2 * orientedScafNumY - 2];
+                                if (itemtmp < 0.5) { itemtmp = 0.5; }
+                                itemtmp = (itemtmp - 0.5) * 2;
+                                //myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(255 * (1 - itemtmp)), 255, (int)(255 * (1 - itemtmp))));
+                                myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(itemtmp * 255), Color.Green));
+                                gall.FillRectangle(myBrush, 100 + hmunit * (cntScafLenX - w.Item1 / (float)2), 2100 - hmunit * (cntScafLenY - z.Item1 / (float)2), hmunit * w.Item1 / (float)2, hmunit * z.Item1 / (float)2);
+
+                                itemtmp = matchAllData[2 * orientedScafNumX - 2, 2 * orientedScafNumY - 1];
+                                if (itemtmp < 0.5) { itemtmp = 0.5; }
+                                itemtmp = (itemtmp - 0.5) * 2;
+                                //myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(255 * (1 - itemtmp)), 255, (int)(255 * (1 - itemtmp))));
+                                myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(itemtmp * 255), Color.Green));
+                                gall.FillRectangle(myBrush, 100 + hmunit * (cntScafLenX - w.Item1), 2100 - hmunit * (cntScafLenY), hmunit * w.Item1 / (float)2, hmunit * z.Item1 / (float)2);
+
+                                itemtmp = matchAllData[2 * orientedScafNumX - 1, 2 * orientedScafNumY - 1];
+                                if (itemtmp < 0.5) { itemtmp = 0.5; }
+                                itemtmp = (itemtmp - 0.5) * 2;
+                                //myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(255 * (1 - itemtmp)), 255, (int)(255 * (1 - itemtmp))));
+                                myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(itemtmp * 255), Color.Green));
+                                gall.FillRectangle(myBrush, 100 + hmunit * (cntScafLenX - w.Item1 / (float)2), 2100 - hmunit * (cntScafLenY), hmunit * w.Item1 / (float)2, hmunit * z.Item1 / (float)2);
+                            }
+                            else
+                            {
+                                gall.FillRectangle(myBrush2, 100 + hmunit * (cntScafLenX - w.Item1), 2100 - hmunit * (cntScafLenY), hmunit * w.Item1, hmunit * z.Item1);
+                            }
+                        });
+                        heatmap_chr_border.Select((x, i) => (x, i)).ToList().ForEach(w =>
+                        {
+                            if(w.x== orientedScafNumY - 1)
+                            {
+                                gall.DrawLine(pen, 100 + hmunit * (cntScafLenY - z.Item1), 100, 100 + hmunit * (cntScafLenY - z.Item1), 2100);
+                                gall.DrawLine(pen, 100, 2100 - hmunit * (cntScafLenY - z.Item1), 2100, 2100 - hmunit * (cntScafLenY - z.Item1));
+                                gall.DrawString((w.i + 1).ToString(), myfont, Brushes.Black, new Point(30, (int)(2100 - hmunit * (cntScafLenY - z.Item1)) - 30));
+                                gall.DrawString((w.i + 1).ToString(), myfont, Brushes.Black, new Point((int)(100 + hmunit * (cntScafLenY - z.Item1)) + 10, 2130));
+                            }
+                        });
+                    }
+                    else
+                    {
+                        gall.FillRectangle(myBrush2, 100, 2100 - hmunit * (cntScafLenY), 2000, hmunit * z.Item1);
+                    }
+                });
+
+                
+                imageall.Save(opt_o + "_heatmap_phase_physical.png");
             }
             catch (Exception e)
             {

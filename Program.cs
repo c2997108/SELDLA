@@ -90,8 +90,8 @@ namespace SELDLA
                 //args = @"--fasta=E:\temp\dpulex_v1.1_scaf.fasta --vcf=E:\temp\dpulex.all.vcf --family=E:\temp\dpulex.family.txt -o E:\temp\dpulex1 --cs=3 --mode=haploid --MaxLdClusterOnly --noNewVcf --precleaned=E:\temp\dpulex1_clean.txt --nl=0.8 -l 0.7 --RateOfNotNASNP=0.3 --RateOfNotNALD=0.9 --clmatch=0.9 -r 10000".Split(' ');
                 //args = @"--fasta=E:\temp\seldla-selfpoll\RSA_r2.0.fasta --vcf=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.vcf --family=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.family.txt -o E:\temp\seldla-selfpoll\selfpoll --cs=2 --mode=selfpollination --MaxLdClusterOnly --noNewVcf -r 1000".Split(' ');
                 //args = @"--fasta=E:\temp\suma\suma_draft_genome.fasta --vcf=E:\temp\suma\suma_second.vcf --family=E:\temp\suma\family_suma.txt -o E:\temp\suma\suma --noNewVcf".Split(' ');
-                args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\sample_itoyo_1-100_head1m.txt --precleaned=C:\work\sample_itoyo_1-100_head1m.txt --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo2 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
-                //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --precleaned=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo3 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
+                //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\sample_itoyo_1-100_head1m.txt --precleaned=C:\work\sample_itoyo_1-100_head1m.txt --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo2 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
+                //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --precleaned=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo3 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 3".Split(' ');
                 //dotnet publish -c Release -f netcoreapp2.0 -r linux-x64 -o SELDLA/linux-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r win-x64 -o SELDLA/win-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r osx-x64 -o SELDLA/osx-x64
@@ -256,7 +256,7 @@ namespace SELDLA
             }
             filefasta.Close();
 
-            Console.WriteLine("Detect breakpoints");
+            Console.WriteLine("Detect assembly errors");
             StreamWriter writer = new StreamWriter(opt_o + "_break.txt");
             Dictionary<string, List<int>> breaklist = new Dictionary<string, List<int>>();
             foreach (KeyValuePair<string, SortedDictionary<int, int>> tempbreak in breaks)
