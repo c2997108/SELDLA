@@ -533,6 +533,10 @@ namespace SELDLA{
             //一致率テーブル作成
             StreamWriter writer_mtable = new StreamWriter(opt_o + "_match_rate");
             writer_mtable.Write("#chr_contig_pos");
+            List<int> heatmap_chr_border = new List<int>();
+            int heatmap_chr_border_temp = -1;
+            int heatmap_chr_border_cnt = 0;
+            double[,] heatmap_data = new double[matchRateOrder.Count*2, matchRateOrder.Count*2];
             matchRateOrder.ForEach(x =>
             {
                 if (x.Item3 == "+")
@@ -543,6 +547,12 @@ namespace SELDLA{
                 {
                     writer_mtable.Write("\t" + x.Item1 + "_" + x.Item2 + "_e\t" + x.Item1 + "_" + x.Item2 + "_s");
                 }
+                if(x.Item1 != heatmap_chr_border_temp)
+                {
+                    heatmap_chr_border_temp = x.Item1;
+                    heatmap_chr_border.Add(heatmap_chr_border_cnt);
+                }
+                heatmap_chr_border_cnt++;
             });
             writer_mtable.WriteLine();
             matchRateOrder.ForEach(x =>
@@ -554,21 +564,21 @@ namespace SELDLA{
                     {
                         if(x.Item2==y.Item2)
                         {
-                            writer_mtable.Write("\t1\t1");
+                            writer_mtable.Write("\t1\t"+ match_rate_for_ends(datas[x.Item2], opt_nonzerophase, num_member));
                         }
                         else if (y.Item3 == "+") {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -578,22 +588,22 @@ namespace SELDLA{
                     {
                         if (x.Item2 == y.Item2)
                         {
-                            writer_mtable.Write("\t1\t1");
+                            writer_mtable.Write("\t"+ match_rate_for_ends(datas[x.Item2], opt_nonzerophase, num_member)+"\t1");
                         }
                         else if (y.Item3 == "+")
                         {
                             double temp;
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; } //end->startはデータがないため
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; } //end->startはデータがないため
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -606,22 +616,22 @@ namespace SELDLA{
                     {
                         if (x.Item2 == y.Item2)
                         {
-                            writer_mtable.Write("\t1\t1");
+                            writer_mtable.Write("\t1\t"+ match_rate_for_ends(datas[x.Item2], opt_nonzerophase, num_member));
                         }
                         else if (y.Item3 == "+")
                         {
                             double temp;
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -631,22 +641,22 @@ namespace SELDLA{
                     {
                         if (x.Item2 == y.Item2)
                         {
-                            writer_mtable.Write("\t1\t1");
+                            writer_mtable.Write("\t"+ match_rate_for_ends(datas[x.Item2], opt_nonzerophase, num_member)+"\t1");
                         }
                         else if (y.Item3 == "+")
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception e) { temp = 0; }
+                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -655,7 +665,7 @@ namespace SELDLA{
             });
             writer_mtable.Close();
 
-            //グラフ作成
+            //グラフ作成　連鎖地図
             int per_width=250;
             int per_height=1000;
             int all_per_num=8;
@@ -677,6 +687,51 @@ namespace SELDLA{
                     drawChrFin(gall, maxbp, maxcm, 1, i, listlinkages[i - 1].length, listlinkages[i - 1].scafs[listlinkages[i - 1].scafs.Count - 1].cm2, (j - 1) * per_width, (k - 1) * per_height);
                 }
                 imageall.Save(opt_o + "_map_all.png");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            //グラフ作成　ヒートマップ
+            Console.WriteLine("Drawing heatmap... If you don't need it, you can stop.");
+            try
+            {
+                var imageall = new Bitmap(1200,1200);
+                var gall = Graphics.FromImage(imageall);
+                gall.SmoothingMode = SmoothingMode.AntiAlias;
+                gall.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                gall.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                System.Drawing.SolidBrush myBrush = new System.Drawing.SolidBrush(Color.White);
+                gall.FillRectangle(myBrush, 0, 0, 1200, 1200);
+                int hmall = matchRateOrder.Count*2;
+                float hmunit = 1000 / (float)hmall;
+
+                File.ReadLines(opt_o + "_match_rate").Select((line, y) => (line,y)).ToList().ForEach(z=>
+                {
+                    if (z.y > 0)
+                    {
+                        z.line.Split("\t").Skip(1).Select((item,x)=>(item,x)).ToList().ForEach(w=>
+                        {
+                            double itemtmp = double.Parse(w.item);
+                            if (itemtmp < 0.5) { itemtmp = 0.5; }
+                            itemtmp = (itemtmp - 0.5) * 2;
+                            myBrush = new System.Drawing.SolidBrush(Color.FromArgb((int)(itemtmp*255) , Color.Green));
+                            //Console.WriteLine((int)(itemtmp * 255) + " " + (100 + hmunit * w.x) + " " + (100 + hmunit * z.y));
+                            gall.FillRectangle(myBrush, 100 + hmunit * w.x, 1100 - hmunit * z.y, hmunit, hmunit);
+                        });
+                    }
+                });
+                var pen = new Pen(Color.Black);
+                Font myfont = new Font("Tahoma", 20);
+                heatmap_chr_border.Select((x,i)=>(x,i)).ToList().ForEach(z =>
+                {
+                    gall.DrawLine(pen, 100 + z.x * 2 * hmunit, 100, 100 + z.x * 2 * hmunit, 1100);
+                    gall.DrawLine(pen, 100, 1100 - z.x * 2 * hmunit, 1100, 1100 - z.x * 2 * hmunit);
+                    gall.DrawString((z.i+1).ToString(), myfont, Brushes.Black, new Point(30, (int)(1100 - z.x * 2 * hmunit) - 30));
+                    gall.DrawString((z.i+1).ToString(), myfont, Brushes.Black, new Point((int)(100 + z.x * 2 * hmunit) + 10, 1130));
+                });
+                imageall.Save(opt_o + "_heatmap_phase.png");
             }
             catch (Exception e)
             {
@@ -939,6 +994,25 @@ namespace SELDLA{
             resmatch.chr=chr;
             resmatch.match=res;
             return resmatch;
+        }
+        public static double match_rate_for_ends(SortedDictionary<int, Dictionary<string, int[]>> x, double opt_nonzerophase, int num_member)
+        {
+            int num_ind = 0;
+            int num_match = 0;
+            foreach (KeyValuePair<int, Dictionary<string, int[]>> pair in x)
+            {
+                    int[] temp = get_dist(pair.Value["start"], pair.Value["end"]);
+                    num_ind += temp[1];
+                    num_match += temp[0];
+            }
+            if (num_ind < num_member * opt_nonzerophase)
+            {
+                return 0;
+            }
+            else
+            {
+                return num_match / (double)num_ind;
+            }
         }
         public static double match_rate(SortedDictionary<int, Dictionary<string, int[]>> x, SortedDictionary<int, Dictionary<string, int[]>> y, string xpos, string ypos, double opt_nonzerophase, int num_member){
             int num_ind=0;
