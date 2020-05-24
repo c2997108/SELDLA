@@ -148,6 +148,7 @@ namespace SELDLA
 
         public void splitVcf(string input_clean, string opt_o, string inputfamily, double opt_p, double opt_b, string mode, bool needSort)
         {
+            //家系情報を読み込む
             StreamReader file = new StreamReader(inputfamily);
             string line;
             List<string[]> families = new List<string[]>();
@@ -166,29 +167,19 @@ namespace SELDLA
             file.Close();
             Console.WriteLine("families: " + families.Count);
 
+            //分割開始
             StreamReader vcffile = new StreamReader(input_clean);
-            List<string[]> lines = new List<string[]>();
             string[] header = null;
             int counter = 0;
             while ((line = vcffile.ReadLine()) != null)
             {
                 counter++;
-                if (counter%100000==0) { Console.WriteLine("read " + counter + " lines"); }
                 if (counter == 1)
                 {
-                    header = line.Split("\t");
-                }
-                else
-                {
-                    lines.Add(line.Split("\t"));
+                    header = line.Split("\t"); break;
                 }
             }
             vcffile.Close();
-            Console.WriteLine("cleaned datas: " + lines.Count);
-            if (needSort)
-            {
-                lines = lines.OrderBy(x => x[0]).ThenBy(x => Int32.Parse(x[1])).ToList();
-            }
 
             int num_fam = 0;
             foreach (string[] fam in families)
@@ -198,7 +189,7 @@ namespace SELDLA
                 Dictionary<int, int> idord = new Dictionary<int, int>();
                 for (int j = 0; j < fam.Length; j++)
                 {
-                    //vcfに親の情報が無い場合でも頑張って動かすために、その時はfamily.txtファイルに親の名前として-1を入力するという意味？
+                    //vcfに親の情報が無い場合でも頑張って動かすために、その時はfamily.txtファイルに親の名前として-1を入力してあればOK
                     if ((mode == "crossbreed" || mode == "duploid") && (j == 0 || j == 1) && fam[j] == "-1")
                     {
                         idord.Add(j, -1);
@@ -207,7 +198,7 @@ namespace SELDLA
                     {
                         idord.Add(j, -1);
                     }
-                    else //以下は普通に親もきちんとある場合？
+                    else //以下は普通に親もきちんとある場合
                     {
                         for (int i = 9; i < header.Length; i++)
                         {
@@ -240,48 +231,48 @@ namespace SELDLA
                 }
                 writer.WriteLine("");
 
-                ParallelQuery<string> datas;
+                List<bool> countdatas;
                 if (mode == "crossbreed")
                 {
-                    datas = lines
-                                .AsParallel()
-                                .AsOrdered()
-                                .Select(f => splitVcfRowCrossHap(f, idord, opt_p, opt_b));
+                    countdatas = File.ReadLines(input_clean).Skip(1).AsParallel().AsOrdered().Select(x => x.Split("\t")).Select(f => splitVcfRowCrossHap(f, idord, opt_p, opt_b))
+                                    .Where(x => x != null).AsSequential().Select(x => { writer.WriteLine(x); return true; }).ToList();
                 }
                 else if (mode == "duploid")
                 {
-                    datas = lines
-                                .AsParallel()
-                                .AsOrdered()
-                                .Select(f => splitVcfRowDup(f, idord, opt_p, opt_b));
+                    countdatas = File.ReadLines(input_clean).Skip(1).AsParallel().AsOrdered().Select(x => x.Split("\t")).Select(f => splitVcfRowDup(f, idord, opt_p, opt_b))
+                                    .Where(x => x != null).AsSequential().Select(x => { writer.WriteLine(x); return true; }).ToList();
                 }
                 else if (mode == "haploid")
                 {
-                    datas = lines
-                                .AsParallel()
-                                .AsOrdered()
-                                .Select(f => splitVcfRowHap(f, idord, opt_p, opt_b));
+                    countdatas = File.ReadLines(input_clean).Skip(1).AsParallel().AsOrdered().Select(x => x.Split("\t")).Select(f => splitVcfRowHap(f, idord, opt_p, opt_b))
+                                    .Where(x => x != null).AsSequential().Select(x => { writer.WriteLine(x); return true; }).ToList();
                 }
                 else //if (mode == "selfpollination")
                 {
-                    datas = lines
-                                .AsParallel()
-                                .AsOrdered()
-                                .Select(f => splitVcfRowSelfPoll(f, idord, opt_p, opt_b));
-                }
-                int outline = 0;
-                foreach (string str in datas)
-                {
-                    if (str != null)
-                    {
-                        outline++;
-                        //Console.WriteLine(str);
-                        writer.WriteLine(str);
-                    }
+                    countdatas = File.ReadLines(input_clean).Skip(1).AsParallel().AsOrdered().Select(x => x.Split("\t")).Select(f => splitVcfRowSelfPoll(f, idord, opt_p, opt_b))
+                                    .Where(x => x != null).AsSequential().Select(x => { writer.WriteLine(x); return true; }).ToList();
                 }
                 writer.Close();
-                lines.Clear();
-                Console.WriteLine("family " + num_fam + " datas: " + outline);
+                Console.WriteLine("family " + num_fam + " datas: " + countdatas.Count);
+
+                if (needSort)
+                {
+                    Console.WriteLine("Sorting... This step needs memory larger than the input vcf. If you don't have enough memory, you have to sort input vcf using sort commnad of Linux.");
+                    StreamWriter writer2 = new StreamWriter(opt_o + "_sorted" + "_split_" + num_fam + ".txt");
+                    File.ReadLines(opt_o + "_split_" + num_fam + ".txt").Take(1).Select(x => { writer2.WriteLine(x); return true; }).ToList();
+                    File.ReadLines(opt_o + "_split_" + num_fam + ".txt").Skip(1).AsParallel().AsOrdered().Select(x => x.Split("\t")).OrderBy(x => x[0]).ThenBy(x => Int32.Parse(x[1]))
+                        .AsSequential().Select(x =>
+                        {
+                            writer2.Write(x[0]);
+                            for(int i = 1; i < x.Length; i++)
+                            {
+                                writer2.Write("\t" + x[i]);
+                            }
+                            writer2.WriteLine(); 
+                            return true;
+                        }).ToList();
+                    writer2.Close();
+                }
             }
 
         }

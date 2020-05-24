@@ -10,7 +10,7 @@ namespace SELDLA
     {
         static void Main(string[] args)
         {
-            string version = "2.1.1";
+            string version = "2.1.2";
             int opt_dp = 1;
             int opt_gq = 0;
             double opt_nonzerorate = 0.3;
@@ -44,7 +44,7 @@ namespace SELDLA
                 {"DP=", "DP_threshold at the cleanupVcf step [1]", (int v) => opt_dp = v},
                 {"GQ=", "GQ_threshold at the cleanupVcf step [0]", (int v) => opt_gq = v},
                 {"NonZeroSampleRate=", "exclude ambiquous SNP at the cleanupVcf step (0-1) [0.3]", (double v) => opt_nonzerorate = v},
-                {"p|hqsnp=", "high quality SNP rate at the splitVcf and Ld2Ph step [0.3]", (double v) => opt_p = v},
+                {"p|hqsnp=", "high quality SNP rate at the splitVcf step [0.3]", (double v) => opt_p = v},
                 {"b|bal=", "0 / 1 balance at the splitVcf step [0.1]", (double v) => opt_b = v},
                 {"NeedSort","If the input vcf file is not sorted, use this option at the splitVcf step", v => needSort=v!=null},
                 { "nl=", "near SNP match rate at the Snp2Ld step (0.5-1) [0.9]", (double v)=>opt_nc = v},
@@ -159,6 +159,13 @@ namespace SELDLA
                 prep.splitVcf(precleaned, opt_o, inputfamily, opt_p, opt_b, mode, needSort);
             }
 
+            //入力ファイルをソートした場合、ソート後のファイルを参照するように変更
+            if (needSort)
+            {
+                opt_o = opt_o + "_sorted";
+            }
+
+            //家系数調査
             StreamReader file = new StreamReader(inputfamily);
             string line;
             List<string[]> families = new List<string[]>();
