@@ -6,7 +6,7 @@ using System.IO;
 namespace SELDLA
 {
 
-    class Ld2Ph : Snp2Ld
+    class C_ブロックからフェーズへ変換 : C_SNPからブロックへ変換
     {
         public double opt_clust_match_rate = 0.8;
         public int opt_clust_size = 2;
@@ -32,6 +32,20 @@ namespace SELDLA
             public adatapos mystartdata;
             public adatapos myenddata;
         }
+
+        /// <summary>
+        /// inputファイル(ブロック情報)を読み取り、ブレークポイント
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="opt_balance"></param>
+        /// <param name="opt_cm"></param>
+        /// <param name="opt_cs"></param>
+        /// <param name="opt_sm"></param>
+        /// <param name="flagsplit"></param>
+        /// <param name="opt_ldnum"></param>
+        /// <param name="maxLdClusterOnly"></param>
+        /// <param name="rateOfNotNA"></param>
+        /// <param name="opt_ldseqnum"></param>
         public void run2(string input, double opt_balance, double opt_cm, int opt_cs, double opt_sm, bool flagsplit, int opt_ldnum, bool maxLdClusterOnly, double rateOfNotNA, int opt_ldseqnum)
         {
 
@@ -68,29 +82,29 @@ namespace SELDLA
                     int n1 = 0;
                     int num_people = values.Length - 3;
                     //string[] chrpos=values[0].Split(":");
-                    if (oldchr != values[1] && oldchr != "" && num > 0)
+                    if (V_一行前のコンティグ名 != values[1] && V_一行前のコンティグ名 != "" && V_コンティグごとのSNP数 > 0)
                     {
-                        Console.WriteLine("calculating the phases of "+oldchr);
-                        clustsearch2(data, pos, oldchr, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA, opt_ldseqnum);
+                        Console.WriteLine("calculating the phases of "+V_一行前のコンティグ名);
+                        clustsearch2(I_LIST_コンティグごとのSNPの個人のジェノタイプ一覧, I_LIST_コンティグ中のPOSの一覧, V_一行前のコンティグ名, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA, opt_ldseqnum);
                         initialize();
                         start_data = new List<int>();
                         end_data = new List<int>();
                     }
-                    oldchr = values[1];
+                    V_一行前のコンティグ名 = values[1];
                     for (int i = 3; i < values.Length; i++)
                     {
                         if (values[i] == "0") { n0++; } else if (values[i] == "1") { n1++; }
                     }
                     if (n0 > num_people * opt_balance && n1 > num_people * opt_balance)
                     {
-                        num++;
+                        V_コンティグごとのSNP数++;
                         int[] tempdata = new int[num_people];
                         for (int i = 3; i < values.Length; i++)
                         {
                             tempdata[i - 3] = Int32.Parse(values[i]);
                         }
-                        data.Add(tempdata);
-                        pos.Add(Int32.Parse(values[2]));
+                        I_LIST_コンティグごとのSNPの個人のジェノタイプ一覧.Add(tempdata);
+                        I_LIST_コンティグ中のPOSの一覧.Add(Int32.Parse(values[2]));
 
                         string[] val2 = values[0].Split("#");
                         start_data.Add(Int32.Parse(val2[1]));
@@ -100,10 +114,10 @@ namespace SELDLA
                 counter++;
             }
             //ファイルの最後のscaffoldのクラスターを検索
-            if (num > 0)
+            if (V_コンティグごとのSNP数 > 0)
             {
-                Console.WriteLine("calculating the phases of " + oldchr);
-                clustsearch2(data, pos, oldchr, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA, opt_ldseqnum);
+                Console.WriteLine("calculating the phases of " + V_一行前のコンティグ名);
+                clustsearch2(I_LIST_コンティグごとのSNPの個人のジェノタイプ一覧, I_LIST_コンティグ中のPOSの一覧, V_一行前のコンティグ名, flagsplit, opt_ldnum, start_data, end_data, maxLdClusterOnly, rateOfNotNA, opt_ldseqnum);
             }
 
             file.Close();

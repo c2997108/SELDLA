@@ -47,7 +47,7 @@ namespace SELDLA
                 {"p|hqsnp=", "high quality SNP rate at the splitVcf step [0.3]", (double v) => opt_p = v},
                 {"b|bal=", "0 / 1 balance at the splitVcf step [0.1]", (double v) => opt_b = v},
                 {"NeedSort","If the input vcf file is not sorted, use this option at the splitVcf step", v => needSort=v!=null},
-                { "nl=", "near SNP match rate at the Snp2Ld step (0.5-1) [0.9]", (double v)=>opt_nc = v},
+                {"nl=", "near SNP match rate at the Snp2Ld step (0.5-1) [0.9]", (double v)=>opt_nc = v},
                 {"r=", "the region to merge near SNP at the Snp2Ld step (bp) [10000]", (int v)=>opt_r =v},
                 {"RateOfNotNASNP=", "threshold of the ratio that is not NA with each other when comparing SNP at the Snp2Ld step [0.2]", (double v) => rateOfNotNASNP = v},
                 {"l|clmatch=", "cluster match rate at the Ld2Ph step [0.8]", (double v) => opt_cm = v},
@@ -91,6 +91,8 @@ namespace SELDLA
                 //args = @"--fasta=E:\temp\seldla-selfpoll\RSA_r2.0.fasta --vcf=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.vcf --family=E:\temp\seldla-selfpoll\ASF2-sakurajima.recode.family.txt -o E:\temp\seldla-selfpoll\selfpoll --cs=2 --mode=selfpollination --MaxLdClusterOnly --noNewVcf -r 1000".Split(' ');
                 //args = @"--fasta=E:\temp\suma\suma_draft_genome.fasta --vcf=E:\temp\suma\suma_second.vcf --family=E:\temp\suma\family_suma.txt -o E:\temp\suma\suma --noNewVcf".Split(' ');
                 //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\sample_itoyo_1-100_head1m.txt --precleaned=C:\work\sample_itoyo_1-100_head1m.txt --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo2 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01".Split(' ');
+                //args = @"--fasta=C:\work\apricot.racon.fasta --vcf=C:\work\apricot.snp.rm.txt --precleaned=C:\work\apricot.snp.rm.txt --family=C:\work\apricot.family.rm -o C:\work\out_apricot --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 3".Split(' ');
+                args = @"--fasta=C:\work\apricot.racon.fasta --vcf=C:\work\apricot.snp.rm.txt --precleaned=C:\work\apricot.snp.rm.txt --family=C:\work\apricot.family.rm -o C:\work\out_apricot --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.3 -r 4000 --RateOfNotNASNP=0.005 --RateOfNotNALD=0.01 --ldseqnum 3 --ldnum=2".Split(' ');
                 //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --precleaned=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo3 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 3".Split(' ');
                 //dotnet publish -c Release -f netcoreapp2.0 -r linux-x64 -o SELDLA/linux-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r win-x64 -o SELDLA/win-x64
@@ -145,18 +147,18 @@ namespace SELDLA
             Console.WriteLine("Run SELDLA ver " + version);
 
             //入力ファイルをフィルタリング、家系ごと(family.txtの行ごと)に分割
-            Prepare prep = new Prepare();
+            C_VCF前処理 I_VCF前処理 = new C_VCF前処理();
             if (precleaned == "")
             {
                 Console.WriteLine("Clean up VCF");
-                prep.cleanupVcf(inputvcf, opt_dp, opt_gq, opt_nonzerorate, opt_o);
+                I_VCF前処理.cleanupVcf(inputvcf, opt_dp, opt_gq, opt_nonzerorate, opt_o);
                 Console.WriteLine("Split VCF into each family");
-                prep.splitVcf(opt_o + "_clean.txt", opt_o, inputfamily, opt_p, opt_b, mode, needSort);
+                I_VCF前処理.F_家系ごとにVCFを分割(opt_o + "_clean.txt", opt_o, inputfamily, opt_p, opt_b, mode, needSort);
             }
             else
             {
                 Console.WriteLine("Split VCF into each family");
-                prep.splitVcf(precleaned, opt_o, inputfamily, opt_p, opt_b, mode, needSort);
+                I_VCF前処理.F_家系ごとにVCFを分割(precleaned, opt_o, inputfamily, opt_p, opt_b, mode, needSort);
             }
 
             //入力ファイルをソートした場合、ソート後のファイルを参照するように変更
@@ -168,42 +170,45 @@ namespace SELDLA
             //家系数調査
             StreamReader file = new StreamReader(inputfamily);
             string line;
-            List<string[]> families = new List<string[]>();
-            int num_member = 0;
+            List<string[]> I_LIST_各家系の個人ID = new List<string[]>();
+            int V_子供の数_全家系合計 = 0;
             while ((line = file.ReadLine()) != null)
             {
                 string[] temp = line.Split("\t");
                 if (temp.Length >= 3)
                 {
-                    families.Add(temp);
+                    I_LIST_各家系の個人ID.Add(temp);
                     if (mode == "crossbreed" || mode == "duploid")
                     {
-                        num_member += temp.Length - 2;
+                        V_子供の数_全家系合計 += temp.Length - 2;
                     }
                     else
                     {
-                        num_member += temp.Length - 1;
+                        V_子供の数_全家系合計 += temp.Length - 1;
                     }
                 }
             }
             file.Close();
 
             //1回目のフェージング　分割点を探すために行う
-            int num_fam = 0;
+            int V_探索済み家系数 = 0;
             Dictionary<string, SortedDictionary<int, int>> breaks = new Dictionary<string, SortedDictionary<int, int>>();
-            foreach (string[] fam in families)
+            foreach (string[] A_各家系の個人ID in I_LIST_各家系の個人ID)
             {
-                num_fam++;
-                Snp2Ld snp = new Snp2Ld();
-                Console.WriteLine("SNP to Block in family No. " + num_fam);
-                snp.run(opt_o + "_split_" + num_fam + ".txt", opt_nc, opt_r, rateOfNotNASNP);
+                V_探索済み家系数++;
+                C_SNPからブロックへ変換 I_SNPからブロックへ変換 = new C_SNPからブロックへ変換();
+                Console.WriteLine("SNP to Block in family No. " + V_探索済み家系数);
+                string V_家系分割済みSNPファイル名 = opt_o + "_split_" + V_探索済み家系数 + ".txt";
+                I_SNPからブロックへ変換.run(V_家系分割済みSNPファイル名, opt_nc, opt_r, rateOfNotNASNP);
 
-                Ld2Ph ld = new Ld2Ph();
-                Console.WriteLine("Block to Phase in family No. " + num_fam);
-                ld.run2(opt_o + "_split_" + num_fam + ".txt.ld", opt_b, opt_cm, opt_cs, opt_sm, true, opt_ldnum, maxLdClusterOnly, rateOfNotNALD, opt_ldseqnum);
+                C_ブロックからフェーズへ変換 I_ブロックからフェーズへ変換 = new C_ブロックからフェーズへ変換();
+                Console.WriteLine("Block to Phase in family No. " + V_探索済み家系数);
+                string V_家系ごとのブロックファイル名 = opt_o + "_split_" + V_探索済み家系数 + ".txt.ld";
+                I_ブロックからフェーズへ変換.run2(V_家系ごとのブロックファイル名, opt_b, opt_cm, opt_cs, opt_sm, true, opt_ldnum, maxLdClusterOnly, rateOfNotNALD, opt_ldseqnum);
 
                 int counter = 0;
-                file = new System.IO.StreamReader(opt_o + "_split_" + num_fam + ".txt.ld.break");
+                string V_家系ごとのブレークポイントファイル名 = opt_o + "_split_" + V_探索済み家系数 + ".txt.ld.break";
+                file = new System.IO.StreamReader(V_家系ごとのブレークポイントファイル名);
                 while ((line = file.ReadLine()) != null)
                 {
                     counter++;
@@ -237,7 +242,7 @@ namespace SELDLA
             }
 
             //FASTAを分割
-            Dictionary<string, string> refseqs = new Dictionary<string, string>();
+            Dictionary<string, string> I_DICT_コンティグ名から塩基配列への連想配列 = new Dictionary<string, string>();
             StreamReader filefasta = new StreamReader(inputfasta);
             string inchr = "";
             StringBuilder insb = new StringBuilder();
@@ -247,7 +252,7 @@ namespace SELDLA
                 {
                     if (inchr != "")
                     {
-                        refseqs.Add(inchr, insb.ToString());
+                        I_DICT_コンティグ名から塩基配列への連想配列.Add(inchr, insb.ToString());
                     }
                     inchr = line.Substring(1).Split(" ")[0].Split("\t")[0];
                     insb = new StringBuilder();
@@ -259,12 +264,13 @@ namespace SELDLA
             }
             if (inchr != "")
             {
-                refseqs.Add(inchr, insb.ToString());
+                I_DICT_コンティグ名から塩基配列への連想配列.Add(inchr, insb.ToString());
             }
             filefasta.Close();
 
-            Console.WriteLine("Detect assembly errors");
-            StreamWriter writer = new StreamWriter(opt_o + "_break.txt");
+            Console.WriteLine("Detecting assembly errors");
+            string V_全家系を統合したブレークポイントファイル名 = opt_o + "_break.txt";
+            StreamWriter writer = new StreamWriter(V_全家系を統合したブレークポイントファイル名);
             Dictionary<string, List<int>> breaklist = new Dictionary<string, List<int>>();
             foreach (KeyValuePair<string, SortedDictionary<int, int>> tempbreak in breaks)
             {
@@ -278,7 +284,7 @@ namespace SELDLA
                     {
                         num_split++;
                         //Console.WriteLine(tempbreak.Key+", "+(oldkey)+", "+pair.Key);
-                        int breakpos = oldkey + searchN(refseqs[tempbreak.Key].Substring(oldkey - 1, pair.Key - oldkey + 1));
+                        int breakpos = oldkey + searchN(I_DICT_コンティグ名から塩基配列への連想配列[tempbreak.Key].Substring(oldkey - 1, pair.Key - oldkey + 1));
                         //Console.WriteLine(tempbreak.Key+"\t"+oldkey+"\t"+pair.Key+"\t"+breakpos);
                         writer.WriteLine(tempbreak.Key + "\t" + oldkey + "\t" + pair.Key + "\t" + breakpos);
                         if (!breaklist.ContainsKey(tempbreak.Key))
@@ -294,14 +300,14 @@ namespace SELDLA
             }
             writer.Close();
 
-            Dictionary<string, string> refseqs2 = new Dictionary<string, string>();
+            Dictionary<string, string> I_DICT_分割後のコンティグ名から塩基配列への連想配列 = new Dictionary<string, string>();
             writer = new StreamWriter(opt_o + "_split_seq.txt");
-            foreach (KeyValuePair<string, string> chr in refseqs)
+            foreach (KeyValuePair<string, string> chr in I_DICT_コンティグ名から塩基配列への連想配列)
             {
                 if (!breaklist.ContainsKey(chr.Key))
                 {
                     writer.WriteLine(chr.Key + "\t" + chr.Value);
-                    refseqs2.Add(chr.Key, chr.Value);
+                    I_DICT_分割後のコンティグ名から塩基配列への連想配列.Add(chr.Key, chr.Value);
                 }
                 else
                 {
@@ -311,20 +317,21 @@ namespace SELDLA
                     {
                         num_break++;
                         writer.WriteLine(chr.Key + "_" + num_break + "\t" + chr.Value.Substring(old_end, pos - old_end));
-                        refseqs2.Add(chr.Key + "_" + num_break, chr.Value.Substring(old_end, pos - old_end));
+                        I_DICT_分割後のコンティグ名から塩基配列への連想配列.Add(chr.Key + "_" + num_break, chr.Value.Substring(old_end, pos - old_end));
                         old_end = pos;
                     }
                     num_break++;
                     writer.WriteLine(chr.Key + "_" + num_break + "\t" + chr.Value.Substring(old_end, chr.Value.Length - old_end));
-                    refseqs2.Add(chr.Key + "_" + num_break, chr.Value.Substring(old_end, chr.Value.Length - old_end));
+                    I_DICT_分割後のコンティグ名から塩基配列への連想配列.Add(chr.Key + "_" + num_break, chr.Value.Substring(old_end, chr.Value.Length - old_end));
                 }
             }
             writer.Close();
 
             //2回目のフェージング
             Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> datas
-             = new Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>>();
-            for (int i = 1; i <= families.Count; i++)
+             = new Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>>(); //(コンティグ名, (家系ID, ("start" or "end", 各個人のジェノタイプ)))
+            int V_家系数 = I_LIST_各家系の個人ID.Count;
+            for (int i = 1; i <= V_家系数; i++)
             {
                 StreamReader ldfile = new StreamReader(opt_o + "_split_" + i + ".txt.ld");
                 StreamWriter ldbfile = new StreamWriter(opt_o + "_split_" + i + ".txt.ld2");
@@ -367,11 +374,11 @@ namespace SELDLA
                 ldfile.Close();
                 ldbfile.Close();
 
-                Ld2Ph ld = new Ld2Ph();
+                C_ブロックからフェーズへ変換 I_ブロックからフェーズへ変換 = new C_ブロックからフェーズへ変換();
                 Console.WriteLine("corrected Block to Phase in family No. " + i);
-                ld.run2(opt_o + "_split_" + i + ".txt.ld2", opt_b, opt_cm, opt_cs, opt_sm, false, opt_ldnum, maxLdClusterOnly, rateOfNotNALD, opt_ldseqnum);
+                I_ブロックからフェーズへ変換.run2(opt_o + "_split_" + i + ".txt.ld2", opt_b, opt_cm, opt_cs, opt_sm, false, opt_ldnum, maxLdClusterOnly, rateOfNotNALD, opt_ldseqnum);
 
-
+                //Console.WriteLine("test");
                 StreamReader phfile = new StreamReader(opt_o + "_split_" + i + ".txt.ld2.ph");
                 int numNR = 0;
                 while ((line = phfile.ReadLine()) != null)
@@ -379,6 +386,7 @@ namespace SELDLA
                     if (numNR == 0) { line = phfile.ReadLine(); } //ヘッダーを飛ばす
                     numNR++;
                     string[] vals = line.Split("\t");
+                    //Console.WriteLine(line);
                     if (vals[1] != "lowqual" || removelqp != "yes")
                     {
                         if (!datas.ContainsKey(vals[0]))
@@ -407,22 +415,23 @@ namespace SELDLA
                     }
                 }
                 phfile.Close();
+                //Console.WriteLine("test2");
             }
 
             //連鎖するコンティグを伸ばしていく
-            Chain cs = new Chain();
+            フェーズ情報からコンティグを伸長 cs = new フェーズ情報からコンティグを伸長();
             Console.WriteLine("make linkage map...");
-            cs.run(refseqs2, datas, opt_s, opt_nonzerophase, num_member, opt_o);
+            cs.run(I_DICT_分割後のコンティグ名から塩基配列への連想配列, datas, opt_s, opt_nonzerophase, V_子供の数_全家系合計, opt_o);
 
             //新しい座標にVCFを変換する
             if (!nonewvcfout)
             {
                 ConvVcf cv = new ConvVcf();
                 Console.WriteLine("convert VCF to new position");
-                cv.run(inputvcf, opt_o + "_break.txt", opt_o + "_chain.txt", opt_o, refseqs2);
+                cv.run(inputvcf, opt_o + "_break.txt", opt_o + "_chain.txt", opt_o, I_DICT_分割後のコンティグ名から塩基配列への連想配列);
                 ConvSNP newsnp = new ConvSNP();
                 Console.WriteLine("convert SNP to new position");
-                newsnp.run(num_fam, opt_o + "_break.txt", opt_o + "_chain.txt", opt_o, refseqs2);
+                newsnp.run(V_探索済み家系数, opt_o + "_break.txt", opt_o + "_chain.txt", opt_o, I_DICT_分割後のコンティグ名から塩基配列への連想配列);
             }
         }
 

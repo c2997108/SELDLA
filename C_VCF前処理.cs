@@ -6,10 +6,10 @@ using System.Threading;
 
 namespace SELDLA
 {
-    class Prepare
+    class C_VCF前処理
     {
         static int cntSplitLines;
-        public Prepare()
+        public C_VCF前処理()
         {
             initialize();
         }
@@ -146,7 +146,17 @@ namespace SELDLA
             }
         }
 
-        public void splitVcf(string input_clean, string opt_o, string inputfamily, double opt_p, double opt_b, string mode, bool needSort)
+        /// <summary>
+        /// 出力はファイルで家系ごとに出力している
+        /// </summary>
+        /// <param name="input_clean"></param>
+        /// <param name="opt_o"></param>
+        /// <param name="inputfamily"></param>
+        /// <param name="opt_p"></param>
+        /// <param name="opt_b"></param>
+        /// <param name="mode"></param>
+        /// <param name="needSort"></param>
+        public void F_家系ごとにVCFを分割(string input_clean, string opt_o, string inputfamily, double opt_p, double opt_b, string mode, bool needSort)
         {
             //家系情報を読み込む
             StreamReader file = new StreamReader(inputfamily);
