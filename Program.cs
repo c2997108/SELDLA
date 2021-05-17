@@ -35,6 +35,8 @@ namespace SELDLA
             string mode = "crossbreed";
             double rateOfNotNASNP = 0.2;
             double rateOfNotNALD = 0.4;
+            double shiftFromCenter = 0.2;
+            double opt_nonzerophasetotal = 0.3;
             string removelqp = "no";
             bool needSort = false;
             int opt_ldseqnum = 2;
@@ -60,6 +62,8 @@ namespace SELDLA
                 {"RemoveLowQualityPhases=","remove low quality phases after the LD2Ph step (yes/no) [no]", v => removelqp = v},
                 {"s|exmatch=", "extension match rate at the Chain step (0.5-1) [0.7]", (double v) => opt_s = v},
                 {"NonZeroPhaseRate=", "exclude ambiquous Phase at the Chain step (0-1) [0.3]", (double v) => opt_nonzerophase = v},
+                {"ShiftFromCenter=", "The distance to allow from the already extended average phase shift when extending the scaffold. (0-1) [0.2]", (double v) => shiftFromCenter = v},
+                {"NonZeroPhaseRateTotal=", "exclude ambiquous Phase at the final Chain step (0-1) [0.3]", (double v) => opt_nonzerophasetotal = v},
                 {"noNewVcf", "no converted vcf output with new position", v => nonewvcfout=v!=null},
                 {"o|output=", "output prefix [seldla]", v => opt_o = v},
                 {"vcf=", "input VCF file <required>", v => inputvcf = v},
@@ -419,9 +423,9 @@ namespace SELDLA
             }
 
             //連鎖するコンティグを伸ばしていく
-            フェーズ情報からコンティグを伸長 cs = new フェーズ情報からコンティグを伸長();
+            C_フェーズ情報からコンティグを伸長 cs = new C_フェーズ情報からコンティグを伸長();
             Console.WriteLine("make linkage map...");
-            cs.run(I_DICT_分割後のコンティグ名から塩基配列への連想配列, datas, opt_s, opt_nonzerophase, V_子供の数_全家系合計, opt_o);
+            cs.run(I_DICT_分割後のコンティグ名から塩基配列への連想配列, datas, opt_s, opt_nonzerophase, V_子供の数_全家系合計, opt_o, shiftFromCenter, opt_nonzerophasetotal);
 
             //新しい座標にVCFを変換する
             if (!nonewvcfout)

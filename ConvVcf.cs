@@ -102,12 +102,12 @@ namespace SELDLA
                             {
                                 oldpos = oldpos + tempref.Length - 1;
                             }
-                            values[3] = フェーズ情報からコンティグを伸長.getRevComp(values[3]);
+                            values[3] = C_フェーズ情報からコンティグを伸長.getRevComp(values[3]);
                             string[] tempalt = values[4].Split(",");
-                            values[4] = フェーズ情報からコンティグを伸長.getRevComp(tempalt[0]);
+                            values[4] = C_フェーズ情報からコンティグを伸長.getRevComp(tempalt[0]);
                             for (int i = 1; i < tempalt.Length; i++)
                             {
-                                values[4] = values[4] + "," + フェーズ情報からコンティグを伸長.getRevComp(tempalt[i]);
+                                values[4] = values[4] + "," + C_フェーズ情報からコンティグを伸長.getRevComp(tempalt[i]);
                             }
                             //以下はNAを含めない場合のみに影響
                             values[1] = (temp.pos + refseqs2[oldchr].Length - oldpos + 1).ToString();

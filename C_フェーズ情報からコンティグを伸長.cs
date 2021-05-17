@@ -7,21 +7,21 @@ using System.Drawing.Drawing2D;
 using System.Drawing;
 
 namespace SELDLA{
-    class フェーズ情報からコンティグを伸長{
-        public struct chr_match{
-            public string chr;
-            public List<double> match;
+    class C_フェーズ情報からコンティグを伸長{
+        public struct contig_match{
+            public string contig;
+            public List<double> I_LIST_一致率;
         }
-        public struct chain{
-            public string chr1;
-            public string chr2;
-            public string pos1;
-            public string pos2;
-            public double match;
+        public struct S_コンティグ1StartOrEndと2StartOrEndの一致率{
+            public string contig1;
+            public string contig2;
+            public string start_end_1;
+            public string start_end_2;
+            public double v_一致率;
         }
-        public struct stranded_chr{
-            public string chr;
-            public int order;
+        public struct stranded_contig{
+            public string contig;
+            public int orient;
             public double match;
         }
         public struct edge{
@@ -30,9 +30,9 @@ namespace SELDLA{
             public string prechr;
             public double match;
         }
-        public struct scafpos{
-            public string chr;
-            public string order;
+        public struct S_連鎖群中の向きと位置{
+            public string V_連鎖群名;
+            public string V_向き;
             public long pos1;
             public long pos2;
             public double cm1;
@@ -40,10 +40,20 @@ namespace SELDLA{
         }
         public struct linkagescaf{
             public long length;
-            public List<scafpos> scafs;
+            public List<S_連鎖群中の向きと位置> I_LIST_連鎖群中の向きと位置;
         }
+        public struct S_伸長したcontigたちの平均フェーズ
+        {
+            public double V_不一致度;
+            public double V_有効個体数割合;
+            public SortedDictionary<int, long[]> I_伸長した合計塩基数;
+            public SortedDictionary<int, double[]> I_家系別のコンティグの平均フェーズ配列;
+        }
+
         int nbp=10*1000;
-        public void run(Dictionary<string, string> I_コンティグ名から塩基配列への連想配列, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, double opt_s, double opt_nonzerophase, int num_member, string opt_o){
+        public void run(Dictionary<string, string> I_コンティグ名から塩基配列への連想配列, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報,
+            double opt_s, double opt_nonzerophase, int num_member, string opt_o, double opt_shiftFromCenter, double opt_nonzerophasetotal)
+        {
             List<string> I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト=new List<string>();
             Dictionary<string, double> I_DICT_コンティグのStartEnd間の一致度 = new Dictionary<string, double>();
             //コンティグ両端のフェーズが異なるコンティグを抽出
@@ -62,49 +72,46 @@ namespace SELDLA{
 
             //scaffoldの両端のフェーズが異なるscaffold間の一致率計算
             List<SortableMatch> sortedmatch = new List<SortableMatch>();
-            List<chr_match> mainmatchss = I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト
+            List<contig_match> mainmatchss = I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト
                                                 .AsParallel()
                                                 .Select(f => calc_match_rate(f, "start", "start", I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, opt_nonzerophase, num_member)).ToList();
-            foreach(chr_match tempmatch in mainmatchss){
+            foreach(contig_match tempmatch in mainmatchss){
                 int i=0;
                 foreach(string tempchr in I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト){
-                    if (tempmatch.chr != tempchr)
+                    if (tempmatch.contig != tempchr)
                     {
-                        SortableMatch temp = new SortableMatch(I_コンティグ名から塩基配列への連想配列[tempmatch.chr].Length + I_コンティグ名から塩基配列への連想配列[tempchr].Length
-                         , tempmatch.match[i], tempmatch.chr, tempchr, "start", "start");
+                        SortableMatch temp = new SortableMatch(I_コンティグ名から塩基配列への連想配列[tempmatch.contig].Length + I_コンティグ名から塩基配列への連想配列[tempchr].Length
+                         , tempmatch.I_LIST_一致率[i], tempmatch.contig, tempchr, "start", "start");
                         sortedmatch.Add(temp);
-                        // if((temp.chr1=="scaffold_1" && temp.chr2=="scaffold_3")||(temp.chr1=="scaffold_3" && temp.chr2=="scaffold_1")){
-                        //     Console.WriteLine(temp.matchrate+", "+temp.chr1+", "+temp.chr2);
-                        // }
                     }
                     i++;
                 }
             }
-            List<chr_match> mainmatchse = I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト
+            List<contig_match> mainmatchse = I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト
                                                 .AsParallel()
                                                 .Select(f => calc_match_rate(f, "start", "end", I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, opt_nonzerophase, num_member)).ToList();
-            foreach(chr_match tempmatch in mainmatchse){
+            foreach(contig_match tempmatch in mainmatchse){
                 int i=0;
                 foreach(string tempchr in I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト){
-                    if (tempmatch.chr != tempchr)
+                    if (tempmatch.contig != tempchr)
                     {
-                        SortableMatch temp = new SortableMatch(I_コンティグ名から塩基配列への連想配列[tempmatch.chr].Length + I_コンティグ名から塩基配列への連想配列[tempchr].Length
-                         , tempmatch.match[i], tempmatch.chr, tempchr, "start", "end");
+                        SortableMatch temp = new SortableMatch(I_コンティグ名から塩基配列への連想配列[tempmatch.contig].Length + I_コンティグ名から塩基配列への連想配列[tempchr].Length
+                         , tempmatch.I_LIST_一致率[i], tempmatch.contig, tempchr, "start", "end");
                         sortedmatch.Add(temp);
                     }
                     i++;
                 }
             }
-            List<chr_match> mainmatchee = I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト
+            List<contig_match> mainmatchee = I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト
                                                 .AsParallel()
                                                 .Select(f => calc_match_rate(f, "end", "end", I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, opt_nonzerophase, num_member)).ToList();
-            foreach(chr_match tempmatch in mainmatchee){
+            foreach(contig_match tempmatch in mainmatchee){
                 int i=0;
                 foreach(string tempchr in I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト){
-                    if (tempmatch.chr != tempchr)
+                    if (tempmatch.contig != tempchr)
                     {
-                        SortableMatch temp = new SortableMatch(I_コンティグ名から塩基配列への連想配列[tempmatch.chr].Length + I_コンティグ名から塩基配列への連想配列[tempchr].Length
-                         , tempmatch.match[i], tempmatch.chr, tempchr, "end", "end");
+                        SortableMatch temp = new SortableMatch(I_コンティグ名から塩基配列への連想配列[tempmatch.contig].Length + I_コンティグ名から塩基配列への連想配列[tempchr].Length
+                         , tempmatch.I_LIST_一致率[i], tempmatch.contig, tempchr, "end", "end");
                         sortedmatch.Add(temp);
                     }
                     i++;
@@ -114,76 +121,52 @@ namespace SELDLA{
             sortedmatch.Sort();
             sortedmatch.Reverse();
 
-            Dictionary<(string, string, string, string), double> matchRateTable = new Dictionary<(string, string, string, string), double>();
-            sortedmatch.ForEach(x=>matchRateTable.Add((x.chr1,x.pos1,x.chr2,x.pos2),x.matchrate)); //chr1:end -> chr2:start方向は欠損したデータになっている
+            Dictionary<(string, string, string, string), double> I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度 = new Dictionary<(string, string, string, string), double>();
+            sortedmatch.ForEach(x=>I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度.Add((x.contig1,x.start_end_1,x.contig2,x.start_end_2),x.V_一致率)); //contig1:end -> contig2:start方向は欠損したデータになっている
             
-            List<chain> mainchains = new List<chain>();
+            List<S_コンティグ1StartOrEndと2StartOrEndの一致率> mainchains = new List<S_コンティグ1StartOrEndと2StartOrEndの一致率>();
             List<string> flagmainstart = new List<string>();
             List<string> flagmainend = new List<string>();
             Dictionary<string, List<string>> flagmain = new Dictionary<string, List<string>>();
             flagmain.Add("start", flagmainstart);
             flagmain.Add("end", flagmainend);
             for(int i=0; i<sortedmatch.Count; i++){
-                // if((sortedmatch[i].chr1=="scaffold_5" && sortedmatch[i].chr2=="scaffold_70") || (sortedmatch[i].chr2=="scaffold_5" && sortedmatch[i].chr1=="scaffold_70")){
-                //     int temp=10;
-                // }
-                if(sortedmatch[i].matchrate<opt_s){
+                if(sortedmatch[i].V_一致率<opt_s){
                     break;
                 }
                 bool isdo = true;
-                if(flagmain[sortedmatch[i].pos1].Contains(sortedmatch[i].chr1)){
+                if(flagmain[sortedmatch[i].start_end_1].Contains(sortedmatch[i].contig1)){
                     isdo=false;
-                }else if(flagmain[sortedmatch[i].pos2].Contains(sortedmatch[i].chr2)){
+                }else if(flagmain[sortedmatch[i].start_end_2].Contains(sortedmatch[i].contig2)){
                     isdo=false;
                 }
                 if(isdo){
-                    chain[] tempall = mainchains.Where(f=> (f.chr1 == sortedmatch[i].chr1 && f.chr2 == sortedmatch[i].chr2)
-                                          || (f.chr1 == sortedmatch[i].chr2 && f.chr2 == sortedmatch[i].chr1)).ToArray();
+                    S_コンティグ1StartOrEndと2StartOrEndの一致率[] tempall = mainchains.Where(f=> (f.contig1 == sortedmatch[i].contig1 && f.contig2 == sortedmatch[i].contig2)
+                                          || (f.contig1 == sortedmatch[i].contig2 && f.contig2 == sortedmatch[i].contig1)).ToArray();
                     if(tempall.Length>0){
                         isdo=false;
                     }
                 }
                 if(isdo){
-                    flagmain[sortedmatch[i].pos1].Add(sortedmatch[i].chr1);
-                    flagmain[sortedmatch[i].pos2].Add(sortedmatch[i].chr2);
-                    chain tempchain1 = new chain();
-                    tempchain1.chr1=sortedmatch[i].chr1;
-                    tempchain1.chr2=sortedmatch[i].chr2;
-                    tempchain1.pos1=sortedmatch[i].pos1;
-                    tempchain1.pos2=sortedmatch[i].pos2;
-                    tempchain1.match=sortedmatch[i].matchrate;
+                    flagmain[sortedmatch[i].start_end_1].Add(sortedmatch[i].contig1);
+                    flagmain[sortedmatch[i].start_end_2].Add(sortedmatch[i].contig2);
+                    S_コンティグ1StartOrEndと2StartOrEndの一致率 tempchain1 = new S_コンティグ1StartOrEndと2StartOrEndの一致率();
+                    tempchain1.contig1=sortedmatch[i].contig1;
+                    tempchain1.contig2=sortedmatch[i].contig2;
+                    tempchain1.start_end_1=sortedmatch[i].start_end_1;
+                    tempchain1.start_end_2=sortedmatch[i].start_end_2;
+                    tempchain1.v_一致率=sortedmatch[i].V_一致率;
                     mainchains.Add(tempchain1);
-                    chain tempchain2 = new chain();
-                    tempchain2.chr2=sortedmatch[i].chr1;
-                    tempchain2.chr1=sortedmatch[i].chr2;
-                    tempchain2.pos2=sortedmatch[i].pos1;
-                    tempchain2.pos1=sortedmatch[i].pos2;
-                    tempchain2.match=sortedmatch[i].matchrate;
+                    S_コンティグ1StartOrEndと2StartOrEndの一致率 tempchain2 = new S_コンティグ1StartOrEndと2StartOrEndの一致率();
+                    tempchain2.contig2=sortedmatch[i].contig1;
+                    tempchain2.contig1=sortedmatch[i].contig2;
+                    tempchain2.start_end_2=sortedmatch[i].start_end_1;
+                    tempchain2.start_end_1=sortedmatch[i].start_end_2;
+                    tempchain2.v_一致率=sortedmatch[i].V_一致率;
                     mainchains.Add(tempchain2);
-
-                    // if((sortedmatch[i].chr1=="scaffold_5" && sortedmatch[i].chr2=="scaffold_70") || (sortedmatch[i].chr2=="scaffold_5" && sortedmatch[i].chr1=="scaffold_70")){
-                    //     Console.WriteLine(sortedmatch[i].matchrate+" "+sortedmatch[i].chr1+" "+sortedmatch[i].chr2+" "+sortedmatch[i].length+" "+sortedmatch[i].pos1+" "+sortedmatch[i].pos2);
-                    // }
                 }
             }
 
-            //scaffoldの両端のフェーズが一致するextra scaffoldとメインのscaffold間の一致率計算
-            // List<SortableMatch> sortedextramatch = new List<SortableMatch>();
-            // ParallelQuery<chr_match> extramatchss = extrachr
-            //                                     .AsParallel()
-            //                                     .Select(f => calc_match_rate(f, "start", "start", croschr, datas));
-            // foreach(chr_match tempmatch in extramatchss){
-            //     int i=0;
-            //     foreach(string tempchr in croschr){
-            //         if (tempmatch.chr != tempchr)
-            //         {
-            //             SortableMatch temp = new SortableMatch(refseqs2[tempmatch.chr].Length + refseqs2[tempchr].Length
-            //              , tempmatch.match[i], tempmatch.chr, tempchr, "start", "start");
-            //             sortedextramatch.Add(temp);
-            //         }
-            //         i++;
-            //     }
-            // }
             List<edge> extramatchse = I_LIST_コンティグ両端のフェーズが一致するコンティグリスト
                                             .AsParallel()
                                             .Select(f => get_max_edge(f, I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, opt_nonzerophase, num_member)).ToList();
@@ -192,26 +175,55 @@ namespace SELDLA{
             List<string> flagpassed = new List<string>();
             int num_ls=0;
             List<linkagescaf> finallinks = new List<linkagescaf>();
-            foreach(string chr in I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト){
-                if(!flagpassed.Contains(chr)){
-                    flagpassed.Add(chr);
-                    List<stranded_chr> stchrs = new List<stranded_chr>();
-                    List<stranded_chr> tempstchrs = searchRev(chr, "start", mainchains, flagpassed);
-                    double oldmatch=1;
-                    foreach(stranded_chr temp in tempstchrs){
-                        stranded_chr newtemp = new stranded_chr();
-                        newtemp.chr=temp.chr;
-                        newtemp.order=temp.order;
-                        newtemp.match=oldmatch;
-                        stchrs.Add(newtemp);
-                        oldmatch=temp.match;
+            foreach(string temp_contig_name in I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト){
+                if(!flagpassed.Contains(temp_contig_name)){
+                    flagpassed.Add(temp_contig_name);
+                    List<stranded_contig> stchrs = new List<stranded_contig>();
+
+                    S_伸長したcontigたちの平均フェーズ I_平均フェーズ = new S_伸長したcontigたちの平均フェーズ();
+                    I_平均フェーズ.I_伸長した合計塩基数 = new SortedDictionary<int, long[]>();
+                    I_平均フェーズ.I_家系別のコンティグの平均フェーズ配列 = new SortedDictionary<int, double[]>();
+                    foreach (KeyValuePair<int, Dictionary<string, int[]>> I_計算前の家系ごとのコンティグの平均フェーズ配列 in I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[temp_contig_name])
+                    {
+                        int num_家系内の個体数 = I_計算前の家系ごとのコンティグの平均フェーズ配列.Value["start"].Length;
+                        I_平均フェーズ.I_伸長した合計塩基数.Add(I_計算前の家系ごとのコンティグの平均フェーズ配列.Key, new long[num_家系内の個体数]);
+                        I_平均フェーズ.I_家系別のコンティグの平均フェーズ配列.Add(I_計算前の家系ごとのコンティグの平均フェーズ配列.Key, new double[num_家系内の個体数]);
                     }
-                    stranded_chr tempstchr = new stranded_chr();
-                    tempstchr.chr=chr;
-                    tempstchr.order=1;
-                    tempstchr.match=oldmatch;
+                    //Console.WriteLine(temp_contig_name);
+                    List<stranded_contig> tempstchrs = searchRev(temp_contig_name, "start", mainchains, flagpassed, I_コンティグ名から塩基配列への連想配列, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, I_平均フェーズ, opt_shiftFromCenter, opt_nonzerophasetotal);
+                    double oldmatch = 1; 
+                    if (tempstchrs != null)
+                    {
+                        foreach (stranded_contig temp in tempstchrs) {
+                            stranded_contig newtemp = new stranded_contig();
+                            newtemp.contig = temp.contig;
+                            newtemp.orient = temp.orient;
+                            newtemp.match = oldmatch;
+                            stchrs.Add(newtemp);
+                            oldmatch = temp.match;
+                        }
+                    }
+                    stranded_contig tempstchr = new stranded_contig();
+                    tempstchr.contig = temp_contig_name;
+                    tempstchr.orient = 1;
+                    tempstchr.match = oldmatch;
                     stchrs.Add(tempstchr);
-                    stchrs.AddRange(searchFor(chr, "end", mainchains, flagpassed));
+
+                    I_平均フェーズ = new S_伸長したcontigたちの平均フェーズ();
+                    I_平均フェーズ.I_伸長した合計塩基数 = new SortedDictionary<int, long[]>();
+                    I_平均フェーズ.I_家系別のコンティグの平均フェーズ配列 = new SortedDictionary<int, double[]>();
+                    foreach (KeyValuePair<int, Dictionary<string, int[]>> I_計算前の家系ごとのコンティグの平均フェーズ配列 in I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[temp_contig_name])
+                    {
+                        int num_家系内の個体数 = I_計算前の家系ごとのコンティグの平均フェーズ配列.Value["start"].Length;
+                        I_平均フェーズ.I_伸長した合計塩基数.Add(I_計算前の家系ごとのコンティグの平均フェーズ配列.Key, new long[num_家系内の個体数]);
+                        I_平均フェーズ.I_家系別のコンティグの平均フェーズ配列.Add(I_計算前の家系ごとのコンティグの平均フェーズ配列.Key, new double[num_家系内の個体数]);
+                    }
+                    //Console.WriteLine("for:");
+                    List<stranded_contig> tempstchrs2 = searchFor(temp_contig_name, "end", mainchains, flagpassed, I_コンティグ名から塩基配列への連想配列, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, I_平均フェーズ, opt_shiftFromCenter, opt_nonzerophasetotal);
+                    if (tempstchrs2 != null)
+                    {
+                        stchrs.AddRange(tempstchrs2);
+                    }
 
                     //最終的な連鎖地図の作成
                     //Console.WriteLine("###"+chr);
@@ -224,19 +236,19 @@ namespace SELDLA{
                     int temp_prev_order=0;
                     double temp_prev_distcm=0;
                     linkagescaf finallink = new linkagescaf();
-                    finallink.scafs = new List<scafpos>();
-                    foreach(stranded_chr stchr in stchrs){
+                    finallink.I_LIST_連鎖群中の向きと位置 = new List<S_連鎖群中の向きと位置>();
+                    foreach(stranded_contig stchr in stchrs){
                         num_ordered_sca++;
                         if(num_ordered_sca==1){
                             double tempmatch=-1;
                             List<edge> tempedges = new List<edge>();
-                            if (stchr.order == 1)
+                            if (stchr.orient == 1)
                             {
-                                tempedges = extramatchse.Where(x => x.chr == stchr.chr && x.match >= opt_s && x.pos == "start").OrderBy(x => x.match).ToList();
+                                tempedges = extramatchse.Where(x => x.chr == stchr.contig && x.match >= opt_s && x.pos == "start").OrderBy(x => x.match).ToList();
                             }
                             else
                             {
-                                tempedges = extramatchse.Where(x => x.chr == stchr.chr && x.match >= opt_s && x.pos == "end").OrderBy(x => x.match).ToList();
+                                tempedges = extramatchse.Where(x => x.chr == stchr.contig && x.match >= opt_s && x.pos == "end").OrderBy(x => x.match).ToList();
                             }
                             foreach (edge tempedge in tempedges)
                             {
@@ -251,7 +263,7 @@ namespace SELDLA{
                                     tempdist+=nbp;
                                 }
                                 finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length);
-                                finallink.scafs.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
+                                finallink.I_LIST_連鎖群中の向きと位置.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
                                 //Console.WriteLine(num_ls + "\t" + tempedge.prechr + "\tna\t" + tempdist+"\t"+ (tempdist+refseqs2[tempedge.prechr].Length) + "\t" + tempdistcm + "\t" + tempdistcm
                                 // + "\t" + tempedge.chr + " " + tempedge.pos + " " + tempedge.match);
                                 tempmatch = tempedge.match;
@@ -265,17 +277,17 @@ namespace SELDLA{
                                 tempdist+=nbp;
                             }
                             string temporder;
-                            if(stchr.order==1){
+                            if(stchr.orient==1){
                                 temporder="+";
                             }else{
                                 temporder="-";
                             }
-                            finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[stchr.chr].Length);
-                            finallink.scafs.Add(createScafPos(stchr.chr, temporder, tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[stchr.chr].Length), tempdistcm, (tempdistcm+(1-I_DICT_コンティグのStartEnd間の一致度[stchr.chr])*100)));
+                            finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[stchr.contig].Length);
+                            finallink.I_LIST_連鎖群中の向きと位置.Add(createScafPos(stchr.contig, temporder, tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[stchr.contig].Length), tempdistcm, (tempdistcm+(1-I_DICT_コンティグのStartEnd間の一致度[stchr.contig])*100)));
                             //Console.WriteLine(num_ls + "\t"+ stchr.chr+"\t"+temporder+"\t"+tempdist + "\t"+ (tempdist+refseqs2[stchr.chr].Length)+"\t"+tempdistcm+"\t"+(tempdistcm+(1-matchcroschr[stchr.chr])*100)
                             //+"\tmatch_rate_of_previous_ordered_scaffold:"+stchr.match+" match_rate_between_both_edge_of_this_scaffold"+matchcroschr[stchr.chr]);
-                            tempdist+=I_コンティグ名から塩基配列への連想配列[stchr.chr].Length;
-                            tempdistcm+=(1-I_DICT_コンティグのStartEnd間の一致度[stchr.chr])*100;
+                            tempdist+=I_コンティグ名から塩基配列への連想配列[stchr.contig].Length;
+                            tempdistcm+=(1-I_DICT_コンティグのStartEnd間の一致度[stchr.contig])*100;
                             temp_prev_distcm=tempdistcm;
                         }else if (num_ordered_sca > 1)
                         {
@@ -286,10 +298,10 @@ namespace SELDLA{
                             }else{
                                 tempedgespre = extramatchse.Where(x => x.chr == temp_prev_chr && x.match >= opt_s && x.pos == "start").OrderByDescending(x => x.match).ToList();
                             }
-                            if(stchr.order==1){
-                                tempedges=extramatchse.Where(x => x.chr == stchr.chr && x.match >= opt_s && x.pos == "start").OrderBy(x => x.match).ToList();
+                            if(stchr.orient==1){
+                                tempedges=extramatchse.Where(x => x.chr == stchr.contig && x.match >= opt_s && x.pos == "start").OrderBy(x => x.match).ToList();
                             }else{
-                                tempedges=extramatchse.Where(x => x.chr == stchr.chr && x.match >= opt_s && x.pos == "end").OrderBy(x => x.match).ToList();
+                                tempedges=extramatchse.Where(x => x.chr == stchr.contig && x.match >= opt_s && x.pos == "end").OrderBy(x => x.match).ToList();
                             }
                             double totalmatch=0;
                             double matchnorm=1;
@@ -307,7 +319,7 @@ namespace SELDLA{
                                 tempdistcm=temp_prev_distcm+(1-tempedge.match)*100*matchnorm;
                                 tempdist+=nbp;
                                 finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length);
-                                finallink.scafs.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
+                                finallink.I_LIST_連鎖群中の向きと位置.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
                                 //Console.WriteLine(num_ls + "\t" + tempedge.prechr + "\tna\t" + tempdist+"\t"+ (tempdist+refseqs2[tempedge.prechr].Length) + "\t" + tempdistcm + "\t" + tempdistcm
                                 // + "\t" + tempedge.chr + " " + tempedge.pos + " " + tempedge.match);
                                 tempdist+=I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length;
@@ -318,7 +330,7 @@ namespace SELDLA{
                                 tempdistcm=newtempdistcm-(1-tempedge.match)*100*matchnorm;
                                 tempdist+=nbp;
                                 finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length);
-                                finallink.scafs.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
+                                finallink.I_LIST_連鎖群中の向きと位置.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
                                 //Console.WriteLine(num_ls + "\t" + tempedge.prechr + "\tna\t" + tempdist+"\t"+ (tempdist+refseqs2[tempedge.prechr].Length) + "\t" + tempdistcm + "\t" + tempdistcm
                                 // + "\t" + tempedge.chr + " " + tempedge.pos + " " + tempedge.match);
                                 tempdist+=I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length;
@@ -326,32 +338,32 @@ namespace SELDLA{
                             tempdistcm=temp_prev_distcm+(1-stchr.match)*100;
                             tempdist+=nbp;
                             string temporder;
-                            if(stchr.order==1){
+                            if(stchr.orient==1){
                                 temporder="+";
                             }else{
                                 temporder="-";
                             }
-                            finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[stchr.chr].Length);
-                            finallink.scafs.Add(createScafPos(stchr.chr, temporder, tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[stchr.chr].Length), tempdistcm, (tempdistcm+(1-I_DICT_コンティグのStartEnd間の一致度[stchr.chr])*100)));
+                            finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[stchr.contig].Length);
+                            finallink.I_LIST_連鎖群中の向きと位置.Add(createScafPos(stchr.contig, temporder, tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[stchr.contig].Length), tempdistcm, (tempdistcm+(1-I_DICT_コンティグのStartEnd間の一致度[stchr.contig])*100)));
                             //Console.WriteLine(num_ls + "\t"+ stchr.chr+"\t"+temporder+"\t"+tempdist + "\t"+ (tempdist+refseqs2[stchr.chr].Length)+"\t"+tempdistcm+"\t"+(tempdistcm+(1-matchcroschr[stchr.chr])*100)
                             //+"\tmatch_rate_of_previous_ordered_scaffold:"+stchr.match+" match_rate_between_both_edge_of_this_scaffold"+matchcroschr[stchr.chr]);
-                            tempdist+=I_コンティグ名から塩基配列への連想配列[stchr.chr].Length;
-                            tempdistcm+=(1-I_DICT_コンティグのStartEnd間の一致度[stchr.chr])*100;
+                            tempdist+=I_コンティグ名から塩基配列への連想配列[stchr.contig].Length;
+                            tempdistcm+=(1-I_DICT_コンティグのStartEnd間の一致度[stchr.contig])*100;
                             temp_prev_distcm=tempdistcm;
                         }
-                        temp_prev_chr=stchr.chr;
-                        temp_prev_order=stchr.order;
+                        temp_prev_chr=stchr.contig;
+                        temp_prev_order=stchr.orient;
 
                         if(num_ordered_sca == stchrs.Count){
                             double tempmatch=-1;
                             List<edge> tempedges = new List<edge>();
-                            if (stchr.order == 1)
+                            if (stchr.orient == 1)
                             {
-                                tempedges = extramatchse.Where(x => x.chr == stchr.chr && x.match >= opt_s && x.pos == "end").OrderByDescending(x => x.match).ToList();
+                                tempedges = extramatchse.Where(x => x.chr == stchr.contig && x.match >= opt_s && x.pos == "end").OrderByDescending(x => x.match).ToList();
                             }
                             else
                             {
-                                tempedges = extramatchse.Where(x => x.chr == stchr.chr && x.match >= opt_s && x.pos == "start").OrderByDescending(x => x.match).ToList();
+                                tempedges = extramatchse.Where(x => x.chr == stchr.contig && x.match >= opt_s && x.pos == "start").OrderByDescending(x => x.match).ToList();
                             }
                             foreach (edge tempedge in tempedges)
                             {
@@ -366,7 +378,7 @@ namespace SELDLA{
                                     tempdist+=nbp;
                                 }
                                 finallink.length=(tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length);
-                                finallink.scafs.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
+                                finallink.I_LIST_連鎖群中の向きと位置.Add(createScafPos(tempedge.prechr, "na", tempdist, (tempdist+I_コンティグ名から塩基配列への連想配列[tempedge.prechr].Length), tempdistcm, tempdistcm));
                                 //Console.WriteLine(num_ls + "\t" + tempedge.prechr + "\tna\t" + tempdist+"\t"+ (tempdist+refseqs2[tempedge.prechr].Length) + "\t" + tempdistcm + "\t" + tempdistcm
                                 // + "\t" + tempedge.chr + " " + tempedge.pos + " " + tempedge.match);
                                 tempmatch = tempedge.match;
@@ -383,7 +395,7 @@ namespace SELDLA{
 
             //結果ファイルの書き出し
             List<linkagescaf> listlinkages = finallinks.OrderByDescending(x=> x.length).ToList();
-            double maxcm = listlinkages.Max(x=> x.scafs[x.scafs.Count-1].cm2);
+            double maxcm = listlinkages.Max(x=> x.I_LIST_連鎖群中の向きと位置[x.I_LIST_連鎖群中の向きと位置.Count-1].cm2);
             long maxbp = listlinkages.Max(x=> x.length);
             int num_big_ls = listlinkages.Where(x => x.length>1000*1000).Count();
             num_ls=0;
@@ -424,44 +436,44 @@ namespace SELDLA{
                 //     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                 //     drawChrBase(g, maxbp, maxcm, 2, num_ls, scafs.length, scafs.scafs[scafs.scafs.Count-1].cm2, 0, 0);
                 // }
-                foreach (scafpos scaf in scafs.scafs) {
+                foreach (S_連鎖群中の向きと位置 scaf in scafs.I_LIST_連鎖群中の向きと位置) {
                     num_scaf++;
                     res_num_scaf++;
-                    res_bp_scaf += I_コンティグ名から塩基配列への連想配列[scaf.chr].Length;
+                    res_bp_scaf += I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length;
                     res_num_scaf_loc++;
-                    res_bp_scaf_loc += I_コンティグ名から塩基配列への連想配列[scaf.chr].Length;
+                    res_bp_scaf_loc += I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length;
                     //Console.WriteLine(num_ls+"\t"+ scaf.chr+"\t"+scaf.order+"\t"+scaf.pos1+"\t"+scaf.pos2+"\t"+scaf.cm1+"\t"+scaf.cm2);
-                    writer.WriteLine(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                    writer.WriteLine(num_ls + "\t" + scaf.V_連鎖群名 + "\t" + scaf.V_向き + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
                     //フェーズ付きチェインファイル作成
-                    if (scaf.order == "+" || scaf.order == "na")
+                    if (scaf.V_向き == "+" || scaf.V_向き == "na")
                     {
-                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
-                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.chr].ToList().ForEach(x => { x.Value["start"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.Write(num_ls + "\t" + scaf.V_連鎖群名 + "\t" + scaf.V_向き + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.V_連鎖群名].ToList().ForEach(x => { x.Value["start"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
                         writer_chph.WriteLine();
-                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
-                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.chr].ToList().ForEach(x => { x.Value["end"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.Write(num_ls + "\t" + scaf.V_連鎖群名 + "\t" + scaf.V_向き + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.V_連鎖群名].ToList().ForEach(x => { x.Value["end"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
                         writer_chph.WriteLine();
                     }
                     else
                     {
-                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
-                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.chr].ToList().ForEach(x => { x.Value["end"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.Write(num_ls + "\t" + scaf.V_連鎖群名 + "\t" + scaf.V_向き + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.V_連鎖群名].ToList().ForEach(x => { x.Value["end"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
                         writer_chph.WriteLine();
-                        writer_chph.Write(num_ls + "\t" + scaf.chr + "\t" + scaf.order + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
-                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.chr].ToList().ForEach(x => { x.Value["start"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
+                        writer_chph.Write(num_ls + "\t" + scaf.V_連鎖群名 + "\t" + scaf.V_向き + "\t" + scaf.pos1 + "\t" + scaf.pos2 + "\t" + scaf.cm1 + "\t" + scaf.cm2);
+                        I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[scaf.V_連鎖群名].ToList().ForEach(x => { x.Value["start"].ToList().ForEach(y => writer_chph.Write("\t" + y)); });
                         writer_chph.WriteLine();
                     }
                     //一致率テーブルのためのインデックス作成
                     //ヒートマップのためのscaffoldの長さ保存
-                    totalScafLen += I_コンティグ名から塩基配列への連想配列[scaf.chr].Length;
-                    if (scaf.order == "+" || scaf.order=="-")
+                    totalScafLen += I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length;
+                    if (scaf.V_向き == "+" || scaf.V_向き=="-")
                     {
-                        matchRateOrder.Add((num_ls, scaf.chr, scaf.order));
-                        scafLenInChrList.Add((I_コンティグ名から塩基配列への連想配列[scaf.chr].Length, "+-"));
+                        matchRateOrder.Add((num_ls, scaf.V_連鎖群名, scaf.V_向き));
+                        scafLenInChrList.Add((I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length, "+-"));
                     }
                     else
                     {
-                        scafLenInChrList.Add((I_コンティグ名から塩基配列への連想配列[scaf.chr].Length, "na"));
+                        scafLenInChrList.Add((I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length, "na"));
                     }
                     
 
@@ -475,31 +487,31 @@ namespace SELDLA{
                             writerfanainchr.Write("N");
                         }
                     }
-                    if(scaf.order=="+"){
-                        writerfa.Write(I_コンティグ名から塩基配列への連想配列[scaf.chr]);
-                        writerfanainchr.Write(I_コンティグ名から塩基配列への連想配列[scaf.chr]);
-                    }else if(scaf.order=="-"){
-                        writerfa.Write(getRevComp(I_コンティグ名から塩基配列への連想配列[scaf.chr]));
-                        writerfanainchr.Write(getRevComp(I_コンティグ名から塩基配列への連想配列[scaf.chr]));
+                    if(scaf.V_向き=="+"){
+                        writerfa.Write(I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名]);
+                        writerfanainchr.Write(I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名]);
+                    }else if(scaf.V_向き=="-"){
+                        writerfa.Write(getRevComp(I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名]));
+                        writerfanainchr.Write(getRevComp(I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名]));
                     }else{
-                        for(int i=0;i<I_コンティグ名から塩基配列への連想配列[scaf.chr].Length;i++){
+                        for(int i=0;i<I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length;i++){
                             writerfa.Write("N");
                         }
-                        writerfanainchr.Write(I_コンティグ名から塩基配列への連想配列[scaf.chr]);
+                        writerfanainchr.Write(I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名]);
                     }
-                    if(scaf.order=="na"){
-                        writerunloc.WriteLine(">linkage_scaffold_"+num_ls+"_unoriented_pos"+scaf.pos1+"_old_"+scaf.chr);
-                        writerunloc.WriteLine(I_コンティグ名から塩基配列への連想配列[scaf.chr]);
-                        inChain.Add(scaf.chr);
+                    if(scaf.V_向き=="na"){
+                        writerunloc.WriteLine(">linkage_scaffold_"+num_ls+"_unoriented_pos"+scaf.pos1+"_old_"+scaf.V_連鎖群名);
+                        writerunloc.WriteLine(I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名]);
+                        inChain.Add(scaf.V_連鎖群名);
                     }else{
                         res_num_scaf_order++;
-                        res_bp_scaf_order+=I_コンティグ名から塩基配列への連想配列[scaf.chr].Length;
+                        res_bp_scaf_order+=I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length;
                         if(scafs.length>=1000*1000){
                             res_num_scaf_order_big++;
-                            res_bp_scaf_order_big+=I_コンティグ名から塩基配列への連想配列[scaf.chr].Length;
+                            res_bp_scaf_order_big+=I_コンティグ名から塩基配列への連想配列[scaf.V_連鎖群名].Length;
                         }
-                        inChain.Add(scaf.chr);
-                        inChainWithOriented.Add(scaf.chr);
+                        inChain.Add(scaf.V_連鎖群名);
+                        inChainWithOriented.Add(scaf.V_連鎖群名);
                     }
                 }
                 writerfa.WriteLine("");
@@ -578,17 +590,17 @@ namespace SELDLA{
                         }
                         else if (y.Item3 == "+") {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -603,17 +615,17 @@ namespace SELDLA{
                         else if (y.Item3 == "+")
                         {
                             double temp;
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; } //end->startはデータがないため
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; } //end->startはデータがないため
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -631,17 +643,17 @@ namespace SELDLA{
                         else if (y.Item3 == "+")
                         {
                             double temp;
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "end", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(y.Item2, "start", x.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -656,17 +668,17 @@ namespace SELDLA{
                         else if (y.Item3 == "+")
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                         else
                         {
                             double temp;
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "end")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
-                            try { temp = matchRateTable[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
+                            try { temp = I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度[(x.Item2, "start", y.Item2, "start")]; } catch (Exception) { temp = 0; }
                             writer_mtable.Write("\t" + temp);
                         }
                     });
@@ -690,12 +702,12 @@ namespace SELDLA{
                 {
                     int j = (i - 1) % all_per_num + 1;
                     int k = (i - 1) / all_per_num + 1;
-                    drawChrBase(gall, maxbp, maxcm, 1, i, listlinkages[i - 1].length, listlinkages[i - 1].scafs[listlinkages[i - 1].scafs.Count - 1].cm2, (j - 1) * per_width, (k - 1) * per_height);
-                    foreach (scafpos scaf in listlinkages[i - 1].scafs)
+                    drawChrBase(gall, maxbp, maxcm, 1, i, listlinkages[i - 1].length, listlinkages[i - 1].I_LIST_連鎖群中の向きと位置[listlinkages[i - 1].I_LIST_連鎖群中の向きと位置.Count - 1].cm2, (j - 1) * per_width, (k - 1) * per_height);
+                    foreach (S_連鎖群中の向きと位置 scaf in listlinkages[i - 1].I_LIST_連鎖群中の向きと位置)
                     {
                         drawBpCm(gall, 1, scaf, maxbp, maxcm, (j - 1) * per_width, (k - 1) * per_height);
                     }
-                    drawChrFin(gall, maxbp, maxcm, 1, i, listlinkages[i - 1].length, listlinkages[i - 1].scafs[listlinkages[i - 1].scafs.Count - 1].cm2, (j - 1) * per_width, (k - 1) * per_height);
+                    drawChrFin(gall, maxbp, maxcm, 1, i, listlinkages[i - 1].length, listlinkages[i - 1].I_LIST_連鎖群中の向きと位置[listlinkages[i - 1].I_LIST_連鎖群中の向きと位置.Count - 1].cm2, (j - 1) * per_width, (k - 1) * per_height);
                 }
                 imageall.Save(opt_o + "_map_all.png");
             }
@@ -931,12 +943,12 @@ namespace SELDLA{
             g.DrawString(each_maxbp.ToString("N0") + " bp", myfont, Brushes.Black, new PointF(startx+5*fold, starty+(60 + 900 * (float)each_maxbp / maxbp)*fold));
             g.DrawString(each_maxcm.ToString("F1") + " cM", myfont, Brushes.Black, new PointF(startx+155*fold, starty+(60 + 900 * (float)(each_maxcm / maxcm))*fold));
         }
-        public void drawBpCm(Graphics g, int fold, scafpos scaf, long maxbp, double maxcm, int startx, int starty){
+        public void drawBpCm(Graphics g, int fold, S_連鎖群中の向きと位置 scaf, long maxbp, double maxcm, int startx, int starty){
             var pen = new Pen(Color.Gray, fold);
             var brush = Brushes.LightGray;
             g.DrawLine(pen, new PointF(startx+75*fold, starty+(50 + 900 * ((float)scaf.pos1 / maxbp))*fold), new PointF(startx+175*fold, starty+(50 + 900 * (float)(scaf.cm1 / maxcm))*fold));
             g.DrawLine(pen, new PointF(startx+75*fold, starty+(50 + 900 * ((float)scaf.pos2 / maxbp))*fold), new PointF(startx+175*fold, starty+(50 + 900 * (float)(scaf.cm2 / maxcm))*fold));
-            if (scaf.order == "na")
+            if (scaf.V_向き == "na")
             {
                 pen = new Pen(Color.Blue, (float)1.5*fold);
                 brush = Brushes.White;
@@ -1008,90 +1020,166 @@ namespace SELDLA{
             }
             return sb1.ToString();
         }
-        public scafpos createScafPos(string chr, string order, long pos1, long pos2, double cm1, double cm2)
+        public S_連鎖群中の向きと位置 createScafPos(string chr, string order, long pos1, long pos2, double cm1, double cm2)
         {
-            scafpos tempscafpos = new scafpos();
-            tempscafpos.chr = chr;
-            tempscafpos.order = order;
+            S_連鎖群中の向きと位置 tempscafpos = new S_連鎖群中の向きと位置();
+            tempscafpos.V_連鎖群名 = chr;
+            tempscafpos.V_向き = order;
             tempscafpos.pos1 = pos1;
             tempscafpos.pos2 = pos2;
             tempscafpos.cm1 = cm1;
             tempscafpos.cm2 = cm2;
             return tempscafpos;
         }
-        public List<stranded_chr> searchFor(string chr, string pos, List<chain> mainchains, List<string> flagpassed){
-            List<stranded_chr> result = new List<stranded_chr>();
-            chain[] tempchain = mainchains.Where(f => f.chr1==chr && f.pos1==pos).ToArray();
-            // if(chr=="scaffold_5"){
-            //     bool test = flagpassed.Contains("scaffold_70");
-            //     int temp=10;
-            // }
+        public List<stranded_contig> searchFor(string query_contig_Name, string query_contig_StartEnd, List<S_コンティグ1StartOrEndと2StartOrEndの一致率> mainchains, List<string> flagpassed,
+            Dictionary<string, string> I_コンティグ名から塩基配列への連想配列, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報,
+            S_伸長したcontigたちの平均フェーズ I_平均フェーズ, double opt_shiftFromCenter, double opt_nonzerophasetotal)
+        {
+            List<stranded_contig> result = new List<stranded_contig>();
+            S_コンティグ1StartOrEndと2StartOrEndの一致率[] tempchain = mainchains.Where(f => f.contig1==query_contig_Name && f.start_end_1==query_contig_StartEnd).ToArray();
             if(tempchain.Length==1){
-                if(!flagpassed.Contains(tempchain[0].chr2)){
-                    flagpassed.Add(tempchain[0].chr2);
+                if(!flagpassed.Contains(tempchain[0].contig2)){
+                    S_伸長したcontigたちの平均フェーズ I_temp_平均フェーズ = F_平均フェーズを計算(I_平均フェーズ, query_contig_Name, query_contig_StartEnd, I_コンティグ名から塩基配列への連想配列, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報);
+                    if (I_temp_平均フェーズ.V_不一致度 > opt_shiftFromCenter || I_temp_平均フェーズ.V_有効個体数割合 < opt_nonzerophasetotal) { return null; }
+                    flagpassed.Add(tempchain[0].contig2);
                     string temppos;
                     int temporder;
-                    if(tempchain[0].pos2=="start"){
+                    if(tempchain[0].start_end_2=="start"){
                         temppos="end";
                         temporder=1;
                     }else{
                         temppos="start";
                         temporder=-1;
                     }
-                    stranded_chr tempstchr= new stranded_chr();
-                    tempstchr.chr=tempchain[0].chr2;
-                    tempstchr.order=temporder;
-                    tempstchr.match=tempchain[0].match;
+                    stranded_contig tempstchr= new stranded_contig();
+                    tempstchr.contig=tempchain[0].contig2;
+                    tempstchr.orient=temporder;
+                    tempstchr.match=tempchain[0].v_一致率;
                     result.Add(tempstchr);
-                    List<stranded_chr> tempres = searchFor(tempchain[0].chr2, temppos, mainchains, flagpassed);
-                    result.AddRange(tempres);
+                    List<stranded_contig> tempres = searchFor(tempchain[0].contig2, temppos, mainchains, flagpassed, I_コンティグ名から塩基配列への連想配列, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, I_temp_平均フェーズ, opt_shiftFromCenter, opt_nonzerophasetotal);
+                    if (tempres != null) { result.AddRange(tempres); }
                 }
             }
             return result;
         }
-        public List<stranded_chr> searchRev(string chr, string pos, List<chain> mainchains, List<string> flagpassed){
-            List<stranded_chr> result = new List<stranded_chr>();
-            chain[] tempchain = mainchains.Where(f => f.chr1==chr && f.pos1==pos).ToArray();
+        public List<stranded_contig> searchRev(string query_contig_Name, string query_contig_StartEnd, List<S_コンティグ1StartOrEndと2StartOrEndの一致率> mainchains, List<string> flagpassed,
+            Dictionary<string, string> I_コンティグ名から塩基配列への連想配列, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報,
+            S_伸長したcontigたちの平均フェーズ I_平均フェーズ, double opt_shiftFromCenter, double opt_nonzerophasetotal)
+        {
+            List<stranded_contig> result = new List<stranded_contig>();
+            S_コンティグ1StartOrEndと2StartOrEndの一致率[] tempchain = mainchains.Where(f => f.contig1==query_contig_Name && f.start_end_1==query_contig_StartEnd).ToArray();
             if(tempchain.Length==1){
-                if(!flagpassed.Contains(tempchain[0].chr2)){
-                    flagpassed.Add(tempchain[0].chr2);
+                if(!flagpassed.Contains(tempchain[0].contig2)){
+                    S_伸長したcontigたちの平均フェーズ I_temp_平均フェーズ = F_平均フェーズを計算(I_平均フェーズ, query_contig_Name, query_contig_StartEnd, I_コンティグ名から塩基配列への連想配列, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報);
+                    if (I_temp_平均フェーズ.V_不一致度 > opt_shiftFromCenter || I_temp_平均フェーズ.V_有効個体数割合 < opt_nonzerophasetotal) { return null; }
+                    flagpassed.Add(tempchain[0].contig2);
                     string temppos;
                     int temporder;
-                    if(tempchain[0].pos2=="start"){
+                    if(tempchain[0].start_end_2=="start"){
                         temppos="end";
                         temporder=-1;
                     }else{
                         temppos="start";
                         temporder=1;
                     }
-                    stranded_chr tempstchr= new stranded_chr();
-                    tempstchr.chr=tempchain[0].chr2;
-                    tempstchr.order=temporder;
-                    tempstchr.match=tempchain[0].match;
-                    List<stranded_chr> tempres = searchRev(tempchain[0].chr2, temppos, mainchains, flagpassed);
-                    result.AddRange(tempres);
+                    stranded_contig tempstchr= new stranded_contig();
+                    tempstchr.contig=tempchain[0].contig2;
+                    tempstchr.orient=temporder;
+                    tempstchr.match=tempchain[0].v_一致率;
+                    List<stranded_contig> tempres = searchRev(tempchain[0].contig2, temppos, mainchains, flagpassed, I_コンティグ名から塩基配列への連想配列, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, I_temp_平均フェーズ, opt_shiftFromCenter, opt_nonzerophasetotal);
+                    if (tempres != null) { result.AddRange(tempres); }
                     result.Add(tempstchr);
                 }
             }
             return result;
         }
 
+        public S_伸長したcontigたちの平均フェーズ F_平均フェーズを計算(S_伸長したcontigたちの平均フェーズ oldフェーズ, string query_contig_Name, string StartEnd, 
+            Dictionary<string, string> I_コンティグ名から塩基配列への連想配列, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報)
+        {
+            int V_コンティグ長 = I_コンティグ名から塩基配列への連想配列[query_contig_Name].Length;
+            S_伸長したcontigたちの平均フェーズ I_平均フェーズ計算結果 = new S_伸長したcontigたちの平均フェーズ();
+            I_平均フェーズ計算結果.I_伸長した合計塩基数 = new SortedDictionary<int, long[]>();
+            I_平均フェーズ計算結果.I_家系別のコンティグの平均フェーズ配列 = new SortedDictionary<int, double[]>();
+            int total_有効個体数 = 0;
+            int total_個体数 = 0;
+            double total_不一致度合 = 0;
+            foreach (KeyValuePair<int, double[]> I_計算前の家系ごとのコンティグの平均フェーズ配列 in oldフェーズ.I_家系別のコンティグの平均フェーズ配列)
+            {
+                double V_temp_フェーズ一致時の計算結果 = 0;
+                double V_temp_フェーズ反転時の計算結果 = 0;
+                long[] A_temp_コンティグ長合計 = new long[I_計算前の家系ごとのコンティグの平均フェーズ配列.Value.Length]; //0で初期化
+                double[] A_temp_フェーズ一致時の平均フェーズ = new double[I_計算前の家系ごとのコンティグの平均フェーズ配列.Value.Length]; //0で初期化
+                double[] A_temp_フェーズ反転時の平均フェーズ = new double[I_計算前の家系ごとのコンティグの平均フェーズ配列.Value.Length]; //0で初期化
+                int tempN = 0;
+                total_個体数 += I_計算前の家系ごとのコンティグの平均フェーズ配列.Value.Length;
+                for (int i=0; i<I_計算前の家系ごとのコンティグの平均フェーズ配列.Value.Length; i++)
+                {
+                    if(I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[query_contig_Name][I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][StartEnd][i] != -1)
+                    {
+                        tempN++;
+                        if (oldフェーズ.I_伸長した合計塩基数[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][i] == 0) 
+                        { 
+                            I_計算前の家系ごとのコンティグの平均フェーズ配列.Value[i] = I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[query_contig_Name][I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][StartEnd][i]; 
+                        }
+                        V_temp_フェーズ一致時の計算結果 += Math.Abs(I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[query_contig_Name][I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][StartEnd][i]
+                                                            - I_計算前の家系ごとのコンティグの平均フェーズ配列.Value[i]);
+                        V_temp_フェーズ反転時の計算結果 += Math.Abs(1 - I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[query_contig_Name][I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][StartEnd][i]
+                                                            - I_計算前の家系ごとのコンティグの平均フェーズ配列.Value[i]);
+                        A_temp_フェーズ一致時の平均フェーズ[i] = (I_計算前の家系ごとのコンティグの平均フェーズ配列.Value[i] * oldフェーズ.I_伸長した合計塩基数[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][i] +
+                                                                    I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[query_contig_Name][I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][StartEnd][i]* V_コンティグ長)/
+                                                                    (oldフェーズ.I_伸長した合計塩基数[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][i] + V_コンティグ長);
+                        A_temp_フェーズ反転時の平均フェーズ[i] = (I_計算前の家系ごとのコンティグの平均フェーズ配列.Value[i] * oldフェーズ.I_伸長した合計塩基数[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][i] +
+                                            (1 - I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報[query_contig_Name][I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][StartEnd][i]) * V_コンティグ長) /
+                                            (oldフェーズ.I_伸長した合計塩基数[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key][i] + V_コンティグ長);
+                        A_temp_コンティグ長合計[i] += V_コンティグ長;
+                    }
+                }
+                I_平均フェーズ計算結果.I_伸長した合計塩基数[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key] = A_temp_コンティグ長合計;
+                total_有効個体数 += tempN;
+                if (Math.Abs(V_temp_フェーズ一致時の計算結果) <= Math.Abs(V_temp_フェーズ反転時の計算結果))
+                {
+                    I_平均フェーズ計算結果.I_家系別のコンティグの平均フェーズ配列[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key] = A_temp_フェーズ一致時の平均フェーズ;
+                    //System.Console.WriteLine(Math.Abs(V_temp_フェーズ一致時の計算結果 / tempN));
+                    total_不一致度合 += V_temp_フェーズ一致時の計算結果;
+                }
+                else
+                {
+                    I_平均フェーズ計算結果.I_家系別のコンティグの平均フェーズ配列[I_計算前の家系ごとのコンティグの平均フェーズ配列.Key] = A_temp_フェーズ反転時の平均フェーズ;
+                    //System.Console.WriteLine(Math.Abs(V_temp_フェーズ反転時の計算結果 / tempN));
+                    total_不一致度合 += V_temp_フェーズ反転時の計算結果;
+                }
+            }
+            I_平均フェーズ計算結果.V_有効個体数割合 = total_有効個体数 / (double) total_個体数;
+            if (total_有効個体数 > 0)
+            {
+                I_平均フェーズ計算結果.V_不一致度 = total_不一致度合 / total_有効個体数;
+                //System.Console.WriteLine("不一致度:" + total_不一致度合 / total_有効個体数);
+            }
+            else
+            {
+                I_平均フェーズ計算結果.V_不一致度 = 2;
+                //System.Console.WriteLine("total_有効個体数=0");
+            }
+            return I_平均フェーズ計算結果;
+        }
+
         public static edge get_max_edge(string chr, List<string> croschr, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> datas, double opt_nonzerophase, int num_member){
             edge result = new edge();
-            chr_match temp1 = calc_match_rate(chr, "start", "start", croschr, datas, opt_nonzerophase, num_member);
-            chr_match temp2 = calc_match_rate(chr, "start", "end", croschr, datas, opt_nonzerophase, num_member);
+            contig_match temp1 = calc_match_rate(chr, "start", "start", croschr, datas, opt_nonzerophase, num_member);
+            contig_match temp2 = calc_match_rate(chr, "start", "end", croschr, datas, opt_nonzerophase, num_member);
             int i=0;
             double max=0;
             string maxchr="";
             string maxpos="";
             foreach(string tempchr in croschr){
-                if(temp1.match[i]>max){
-                    max=temp1.match[i];
+                if(temp1.I_LIST_一致率[i]>max){
+                    max=temp1.I_LIST_一致率[i];
                     maxchr=tempchr;
                     maxpos="start";
                 }
-                if(temp2.match[i]>max){
-                    max=temp2.match[i];
+                if(temp2.I_LIST_一致率[i]>max){
+                    max=temp2.I_LIST_一致率[i];
                     maxchr=tempchr;
                     maxpos="end";
                 }
@@ -1103,19 +1191,15 @@ namespace SELDLA{
             result.match=max;
             return result;
         }
-        public static chr_match calc_match_rate(string chr, string xpos, string ypos, List<string> croschr, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> datas, double opt_nonzerophase, int num_member){
-            chr_match resmatch = new chr_match();
+        public static contig_match calc_match_rate(string chr, string xpos, string ypos, List<string> croschr, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> datas, double opt_nonzerophase, int num_member){
+            contig_match resmatch = new contig_match();
             List<double> res = new List<double>();
             SortedDictionary<int, Dictionary<string, int[]>> tempx = datas[chr];
             foreach(string tempchr in croschr){
-                // if(chr=="scaffold_70" && tempchr=="scaffold_5"){
-                //     double temptemp=match_rate(tempx, datas[tempchr], xpos, ypos, opt_nonzerophase, num_member);
-                //     Console.Write(match_rate(tempx, datas[tempchr], xpos, ypos, opt_nonzerophase, num_member));
-                // }
                 res.Add(match_rate(tempx, datas[tempchr], xpos, ypos, opt_nonzerophase, num_member));
             }
-            resmatch.chr=chr;
-            resmatch.match=res;
+            resmatch.contig=chr;
+            resmatch.I_LIST_一致率=res;
             return resmatch;
         }
         public static double match_rate_for_ends(SortedDictionary<int, Dictionary<string, int[]>> x, double opt_nonzerophase, int num_member)
