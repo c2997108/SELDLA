@@ -79,7 +79,42 @@ SELDLA_v2.x.x/linux-x64/SELDLA
 
 ## 3. Tuning SELDLA
 
-   The parameter that has the biggest impact is --exmatch, which when lowered to 0.5, all contigs are connected to one. The default value is 0.7, but you can try lowering it to 0.65 or so. The threshold for splitting a misassembled contig is the option of --spmatch, this disconnects the contig in phases with a match rate below the threshold. If this value is set to 0.5, no contigs will be disconnected. The recommended value is between 0.5 and the value of --exmatch.
+The options are listed below.
+
+```
+      --DP=VALUE             DP_threshold at the cleanupVcf step [1]
+      --GQ=VALUE             GQ_threshold at the cleanupVcf step [0]
+      --NonZeroSampleRate=VALUE
+                             exclude ambiquous SNP at the cleanupVcf step (0-1) [0.3]
+  -p, --hqsnp=VALUE          high quality SNP rate at the splitVcf step [0.3]
+  -b, --bal=VALUE            0 / 1 balance at the splitVcf step [0.1]
+      --NeedSort             If the input vcf file is not sorted, use this option at the splitVcf step
+      --nl=VALUE             near SNP match rate at the Snp2Ld step (0.5-1) [0.9]
+  -r=VALUE                   the region to merge near SNP at the Snp2Ld step (bp) [10000]
+      --RateOfNotNASNP=VALUE threshold of the ratio that is not NA with each other when comparing SNP at the Snp2Ld step [0.2]
+  -l, --clmatch=VALUE        cluster match rate at the Ld2Ph step [0.8]
+      --cs=VALUE             cluster size at the Ld2Ph step [2]
+  -v, --spmatch=VALUE        split match rate at the Ld2Ph step (0.5-1) [0.7]
+      --ldnum=VALUE          the minimum number of same LD at the Ld2Ph step [1]
+      --ldseqnum=VALUE       the minimum number of consecutive LDs at the Ld2Ph step [1]
+      --UseAllLDClusters     use all LD clusters at the Ld2Ph step
+      --RateOfNotNALD=VALUE  threshold of the ratio that is not NA with each other when comparing LD at the LD2Ph step [0.4]
+      --RemoveLowQualityPhases=VALUE
+                             remove low quality phases after the LD2Ph step (yes/no) [no]
+  -s, --exmatch=VALUE        extension match rate at the Chain step (0.5-1) [0.7]
+      --NonZeroPhaseRate=VALUE
+                             exclude ambiquous Phase at the Chain step (0-1) [0.3]
+      --noNewVcf             no converted vcf output with new position
+  -o, --output=VALUE         output prefix [seldla]
+      --vcf=VALUE            input VCF file <required>
+      --fasta=VALUE          input FASTA file <required>
+      --family=VALUE         input family file <required>
+      --precleaned=VALUE     pre-calculated cleaned vcf file (if this option is used, input vcf is not used.)
+      --mode=VALUE           analysis mode (crossbreed, haploid, duploid, selfpollination) [crossbreed]
+  -h, --help                 show help.
+```
+
+The parameter that has the biggest impact is --exmatch, which when lowered to 0.5, all contigs are connected to one. The default value is 0.7, but you can try lowering it to 0.65 or so. The threshold for splitting a misassembled contig is the option of --spmatch, this disconnects the contig in phases with a match rate below the threshold. If this value is set to 0.5, no contigs will be disconnected. The recommended value is between 0.5 and the value of --exmatch.
 
 - Overview of SELDLA principles
 
