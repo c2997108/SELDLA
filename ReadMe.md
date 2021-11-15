@@ -1,6 +1,6 @@
 # About
 
-SELDLA (Scaffold Extender with Low Depth Linkage Analysis) is the tool for generating linkage maps and draft genomes with low depth (~1x) sequencing data. SELDLA is written by C# with .NET Core, and it is executable on Windows (7~), Mac (10.12~) and Linux (Ubuntu 14.04~, CentOS 6~).
+SELDLA (Scaffold Extender with Low Depth Linkage Analysis) is the tool for generating linkage maps and draft genomes with low depth (<1x) sequencing data. SELDLA is written by C# with .NET Core, and it is executable on Windows (7-), Mac (10.12-) and Linux (Ubuntu 14.04-, CentOS 6-).
 
 ![image](https://user-images.githubusercontent.com/5350508/141719091-951be7eb-d027-433e-b75b-7e6a204d89e2.png)
 
