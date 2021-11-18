@@ -54,7 +54,7 @@ namespace SELDLA
                 {"RateOfNotNASNP=", "threshold of the ratio that is not NA with each other when comparing SNP at the Snp2Ld step [0.2]", (double v) => rateOfNotNASNP = v},
                 {"l|clmatch=", "cluster match rate at the Ld2Ph step [0.8]", (double v) => opt_cm = v},
                 {"cs=", "cluster size at the Ld2Ph step [2]", (int v) => opt_cs = v},
-                {"v|spmatch=", "split match rate at the Ld2Ph step (0.5-1) [0.7]", (double v) => opt_sm = v},
+                {"v|spmatch=", "split match rate at the Ld2Ph step to break mis-assembled contigs (0.5-1) [0.7]", (double v) => opt_sm = v},
                 {"ldnum=", "the minimum number of same LD at the Ld2Ph step [1]", (int v) => opt_ldnum=v},
                 {"ldseqnum=", "the minimum number of consecutive LDs at the Ld2Ph step [1]", (int v) => opt_ldseqnum=v},
                 {"UseAllLDClusters", "use all LD clusters at the Ld2Ph step", v => maxLdClusterOnly=v==null},
