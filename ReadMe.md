@@ -94,7 +94,7 @@ The options are listed below.
       --RateOfNotNASNP=VALUE threshold of the ratio that is not NA with each other when comparing SNP at the Snp2Ld step [0.2]
   -l, --clmatch=VALUE        cluster match rate at the Ld2Ph step [0.8]
       --cs=VALUE             cluster size at the Ld2Ph step [2]
-  -v, --spmatch=VALUE        split match rate at the Ld2Ph step (0.5-1) [0.7]
+  -v, --spmatch=VALUE        split match rate at the Ld2Ph step to break mis-assembled contigs (0.5-1) [0.7]
       --ldnum=VALUE          the minimum number of same LD at the Ld2Ph step [1]
       --ldseqnum=VALUE       the minimum number of consecutive LDs at the Ld2Ph step [1]
       --UseAllLDClusters     use all LD clusters at the Ld2Ph step
