@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <!--
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.2.2/browser/pixi.js"></script>
+    <script data-require="jquery@*" data-semver="2.1.4" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script data-require="jquery-mousewheel@*" data-semver="3.1.13" src="//cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gpu.js/1.0.2/gpu.min.js"></script>
+    -->
+    <script src="http://suikou.fs.a.u-tokyo.ac.jp/test/seldla/pixi.js"></script>
+    <script data-require="jquery@*" data-semver="2.1.4" src="http://suikou.fs.a.u-tokyo.ac.jp/test/seldla/jquery-2.1.4.min.js"></script>
+    <script data-require="jquery-mousewheel@*" data-semver="3.1.13" src="http://suikou.fs.a.u-tokyo.ac.jp/test/seldla/jquery.mousewheel.min.js"></script>
+    <script src="http://suikou.fs.a.u-tokyo.ac.jp/test/seldla/gpu.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+    <style type="text/css">
+/* ローディング画面 */
+#loading {
+  width: 100vw;
+  height: 100vh;
+  transition: all 1s;
+  background-color: #999;
+  opacity: 0.5;
+
+/* 以下のコードを追加 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+.spinner {
+  width: 100px;
+  height: 100px;
+  margin: 200px auto;
+  background-color: #fff;
+  border-radius: 100%;
+  animation: sk-scaleout 1.0s infinite ease-in-out;
+}
+/* ローディングアニメーション */
+@keyframes sk-scaleout {
+  0% {
+    transform: scale(0);
+  } 100% {
+    transform: scale(1.0);
+    opacity: 0;
+  }
+}
+
+.loaded {
+  opacity: 0;
+  visibility: hidden;
+}
+    </style>
+
+
+    <script>
+    </script>
+  </head>
+
+  <body>
+<div id="loading">
+  <div class="spinner"></div>
+</div>
+	<div class="box1">x:<span id="x1"></span>, y:<span id="y1"></span></div>
+	距離ファイルを選択: <input type="file" id="getfile" accept=".txt" > <a id="savedata">データ保存</a>
+	<span class="right"><label class="open" for="pop-up">?操作方法</label></span>
+	<input type="checkbox" id="pop-up">
+	<span class="overlay">
+	<span class="window">
+		<label class="close" for="pop-up">×</label>
+		<span class="text">
+			マウス操作: <br>
+				左クリック -> 該当なし<br>
+				右クリック -> 該当なし<br>
+				ドラッグ・アンド・ドロップ -> 上下左右に移動<br>
+				マウスホイール -> 拡大・縮小<br>
+               <br>
+			キー操作: <br>
+				R -> 染色体を反転(上側の黄色枠内)<br>
+				T -> 染色体を入れ替え(黄色枠間)<br>
+				Y -> コンティグを反転(上側の水色枠内)<br>
+				U -> コンティグを入れ替え(水色枠間)<br>
+				N -> 1回目 -> コンティグを複数反転させる領域の開始部位指定(上側の水色)<br>
+				　　	2回目 -> 上側水色の位置までの範囲のコンティグを反転<br>
+				M -> 1回目 -> コンティグを複数ブロック間で交換するための領域1の開始部位指定(上側の水色)<br>
+				　　	2回目 -> 上側水色の位置までの範囲のコンティグで領域1を確定<br>
+				　　	3回目 -> 領域2の開始部位指定<br>
+				　　	4回目 -> 領域2を確定し、領域1と2を入れ替える。<br>
+				E -> 1回目 -> 複数のコンティグの染色体名を変更する領域の開始部位指定(上側の水色)<br>
+					　　2回目 -> 複数のコンティグの染色体名を変更<br>
+		</span>
+	<spanv>
+	</span>
+    <script src="script.js"></script>
+  </body>
+
+</html>
+

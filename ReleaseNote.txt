@@ -1,4 +1,8 @@
 ﻿Release Note
+
+2.2.0
+- Mapファイルをグラフィカルに編集するプログラムを追加
+
 2.1.3
 - ShiftFromCenterオプションを追加。Scaffold伸長時にこれまで伸長したscaffoldのフェーズ平均値からのずれを考慮するようにし、端っこのscaffoldだけの一致率で伸びないようにした。
 
