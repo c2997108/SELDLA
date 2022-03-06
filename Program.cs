@@ -10,7 +10,7 @@ namespace SELDLA
     {
         static void Main(string[] args)
         {
-            string version = "2.1.3";
+            string version = "2.2.0";
             int opt_dp = 1;
             int opt_gq = 0;
             double opt_nonzerorate = 0.3;
