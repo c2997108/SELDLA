@@ -51,6 +51,41 @@ namespace SELDLA{
         }
 
         int nbp=10*1000;
+
+        List<stranded_contig> reverseStrandedContigList(List<stranded_contig> list)
+        {
+            List<stranded_contig> result = new List<stranded_contig>();
+            for (int j = list.Count-1; j >=0; j--)
+            {
+                stranded_contig tempcontig = new stranded_contig();
+                tempcontig.contig = list[j].contig;
+                tempcontig.orient = -list[j].orient;
+                if(j == list.Count - 1)
+                {
+                    tempcontig.match = 0;
+                }
+                else
+                {
+                    tempcontig.match = list[j + 1].match;
+                }
+                result.Add(tempcontig);
+            }
+            return result;
+        }
+        List<stranded_contig> modifyFirstItemOfStrandedContigList(List<stranded_contig> list, double val)
+        {
+            List<stranded_contig> result = new List<stranded_contig>();
+            stranded_contig tempcontig = new stranded_contig();
+            tempcontig.contig = list[0].contig;
+            tempcontig.orient = list[0].orient;
+            tempcontig.match = val;
+            result.Add(tempcontig);
+            for (int j = 1; j < list.Count; j++)
+            {
+                result.Add(list[j]);
+            }
+            return result;
+        }
         public void run(Dictionary<string, string> I_コンティグ名から塩基配列への連想配列, Dictionary<string, SortedDictionary<int, Dictionary<string, int[]>>> I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報,
             double opt_s, double opt_nonzerophase, int num_member, string opt_o, double opt_shiftFromCenter, double opt_nonzerophasetotal)
         {
@@ -123,7 +158,134 @@ namespace SELDLA{
 
             Dictionary<(string, string, string, string), double> I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度 = new Dictionary<(string, string, string, string), double>();
             sortedmatch.ForEach(x=>I_Dict_コンティグ1名前とStartEndとコンティグ2名前とStartEndから一致度.Add((x.contig1,x.start_end_1,x.contig2,x.start_end_2),x.V_一致率)); //contig1:end -> contig2:start方向は欠損したデータになっている
-            
+
+            //2022-03-08追加　最近接のものから順番につなぐ
+            Dictionary<string, bool> flag_コンティグ端を通ったか = new Dictionary<string, bool>();
+            List<List<stranded_contig>> list_linkagescafoldごとのリスト = I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト.Select(x =>
+            {
+                List<stranded_contig> temp = new List<stranded_contig>();
+                stranded_contig tempchr = new stranded_contig();
+                tempchr.contig = x;
+                tempchr.orient = 1;
+                tempchr.match = 0;
+                temp.Add(tempchr);
+                return temp;
+            }).ToList();
+            for (int i = 0; i < sortedmatch.Count; i++)
+            {
+                if (sortedmatch[i].V_一致率 < opt_s)
+                {
+                    break;
+                }
+                if(!flag_コンティグ端を通ったか.ContainsKey(sortedmatch[i].contig1+"###"+sortedmatch[i].start_end_1) && !flag_コンティグ端を通ったか.ContainsKey(sortedmatch[i].contig2 + "###" + sortedmatch[i].start_end_2))
+                {
+                    List<stranded_contig> templist1 = new List<stranded_contig>();
+                    List<stranded_contig> templist2 = new List<stranded_contig>();
+                    foreach ( var templist_linkagescafold in list_linkagescafoldごとのリスト)
+                    {
+                        foreach(var tempcontigs in templist_linkagescafold)
+                        {
+                            if (tempcontigs.contig == sortedmatch[i].contig1) templist1 = templist_linkagescafold;
+                            if (tempcontigs.contig == sortedmatch[i].contig2) templist2 = templist_linkagescafold;
+                        }
+                    }
+                    if(templist1.Count == 0 || templist2.Count == 0) { Console.WriteLine("Something wrong. Contigs could not be found in list."); return; }
+                    if(templist1 != templist2)
+                    {
+                        flag_コンティグ端を通ったか.Add(sortedmatch[i].contig1 + "###" + sortedmatch[i].start_end_1, true);
+                        flag_コンティグ端を通ったか.Add(sortedmatch[i].contig2 + "###" + sortedmatch[i].start_end_2, true);
+                        List<stranded_contig> newlist = new List<stranded_contig>();
+                        string end1 = sortedmatch[i].start_end_1;
+                        string end2 = sortedmatch[i].start_end_2;
+                        string contig1 = sortedmatch[i].contig1;
+                        string contig2 = sortedmatch[i].contig2;
+                        stranded_contig list1first = templist1[0];
+                        stranded_contig list2first = templist2[0];
+                        stranded_contig list1last = templist1[templist1.Count - 1];
+                        stranded_contig list2last = templist2[templist2.Count - 1];
+                        if(templist1.Count==1 && templist2.Count == 1)
+                        {
+                            if (end1 == "end")
+                            {
+                                templist1.ForEach(x => newlist.Add(x));
+                            }
+                            else if (end1 == "start")
+                            {
+                                reverseStrandedContigList(templist1).ForEach(x => newlist.Add(x));
+                            }
+                            if (end2 == "start")
+                            {
+                                modifyFirstItemOfStrandedContigList(templist2, sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }
+                            else if (end2 == "end")
+                            {
+                                modifyFirstItemOfStrandedContigList(reverseStrandedContigList(templist2), sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }
+                        }else if (templist1.Count == 1 && templist2.Count > 1)
+                        {
+                            if (end1 == "end")
+                            {
+                                templist1.ForEach(x => newlist.Add(x));
+                            }
+                            else if (end1 == "start")
+                            {
+                                reverseStrandedContigList(templist1).ForEach(x => newlist.Add(x));
+                            }
+                            if (list2first.contig == contig2)
+                            {
+                                modifyFirstItemOfStrandedContigList(templist2, sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }
+                            else if (list2last.contig == contig2)
+                            {
+                                modifyFirstItemOfStrandedContigList(reverseStrandedContigList(templist2), sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }
+                        }else if (templist1.Count > 1 && templist2.Count == 1)
+                        {
+                            if(list1last.contig == contig1)
+                            {
+                                templist1.ForEach(x => newlist.Add(x));
+                            }else if(list1first.contig == contig1)
+                            {
+                                reverseStrandedContigList(templist1).ForEach(x => newlist.Add(x));
+                            }
+                            if(end2 == "start")
+                            {
+                                modifyFirstItemOfStrandedContigList(templist2, sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }else if(end2 == "end")
+                            {
+                                modifyFirstItemOfStrandedContigList(reverseStrandedContigList(templist2), sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }
+                        }
+                        else //list1もlist2も既に連結済みのlistの場合
+                        {
+                            if (list1last.contig == contig1)
+                            {
+                                templist1.ForEach(x => newlist.Add(x));
+                            }
+                            else if (list1first.contig == contig1)
+                            {
+                                reverseStrandedContigList(templist1).ForEach(x => newlist.Add(x));
+                            }
+                            if (list2first.contig == contig2)
+                            {
+                                modifyFirstItemOfStrandedContigList(templist2, sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }
+                            else if (list2last.contig == contig2)
+                            {
+                                modifyFirstItemOfStrandedContigList(reverseStrandedContigList(templist2), sortedmatch[i].V_一致率).ForEach(x => newlist.Add(x));
+                            }
+                        }
+                        list_linkagescafoldごとのリスト.Remove(templist1);
+                        list_linkagescafoldごとのリスト.Remove(templist2);
+                        list_linkagescafoldごとのリスト.Add(newlist);
+                    }
+
+                }
+            }
+            //2022-03-08追加　ここまで
+
+
+            /*
             List<S_コンティグ1StartOrEndと2StartOrEndの一致率> mainchains = new List<S_コンティグ1StartOrEndと2StartOrEndの一致率>();
             List<string> flagmainstart = new List<string>();
             List<string> flagmainend = new List<string>();
@@ -165,16 +327,17 @@ namespace SELDLA{
                     tempchain2.v_一致率=sortedmatch[i].V_一致率;
                     mainchains.Add(tempchain2);
                 }
-            }
+            }*/
 
             List<edge> extramatchse = I_LIST_コンティグ両端のフェーズが一致するコンティグリスト
                                             .AsParallel()
                                             .Select(f => get_max_edge(f, I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト, I_コンティグ名から_家系IDから_StartEndから各個人のジェノタイプ情報, opt_nonzerophase, num_member)).ToList();
 
             //scaffoldの並び順を探索する
-            List<string> flagpassed = new List<string>();
-            int num_ls=0;
+            int num_ls = 0;
             List<linkagescaf> finallinks = new List<linkagescaf>();
+            /*
+            List<string> flagpassed = new List<string>();
             foreach(string temp_contig_name in I_LIST_コンティグ両端のフェーズが異なるコンティグ名リスト){
                 if(!flagpassed.Contains(temp_contig_name)){
                     flagpassed.Add(temp_contig_name);
@@ -223,8 +386,9 @@ namespace SELDLA{
                     if (tempstchrs2 != null)
                     {
                         stchrs.AddRange(tempstchrs2);
-                    }
-
+                    }*/
+            foreach (var stchrs in list_linkagescafoldごとのリスト) {
+                { 
                     //最終的な連鎖地図の作成
                     //Console.WriteLine("###"+chr);
                     num_ls++;
