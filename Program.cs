@@ -10,7 +10,7 @@ namespace SELDLA
     {
         static void Main(string[] args)
         {
-            string version = "2.2.0";
+            string version = "2.3.0";
             int opt_dp = 1;
             int opt_gq = 0;
             double opt_nonzerorate = 0.3;
@@ -98,8 +98,8 @@ namespace SELDLA
                 //args = @"--fasta=C:\work\apricot.racon.fasta --vcf=C:\work\apricot.snp.rm.txt --precleaned=C:\work\apricot.snp.rm.txt --family=C:\work\apricot.family.rm -o C:\work\out_apricot --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 3".Split(' ');
                 //args = @"--fasta=C:\work\apricot.racon.fasta --vcf=C:\work\apricot.snp.rm.txt --precleaned=C:\work\apricot.snp.rm.txt --family=C:\work\apricot.family.rm -o C:\work\out_apricot --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.3 -r 4000 --RateOfNotNASNP=0.005 --RateOfNotNALD=0.01 --ldseqnum 3 --ldnum=2".Split(' ');
                 //args = @"--fasta=C:\work\sample_itoyo.fa --vcf=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --precleaned=C:\work\pseudochr.re.fa.removedup.matrix.clean.txt.vcf2.single.1-110 --family=C:\work\sample_itoyo_family.txt -o C:\work\out_itoyo3 --mode=haploid --noNewVcf -p 0.03 -b 0.03 --cs 2 --nl 0.9 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 4000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 3".Split(' ');
-                //args = @"--fasta=E:\temp\scaffolds.fa --vcf=E:\temp\pseudochr.re.fa.removedup.matrix.clean.txt.vcf --precleaned=E:\temp\pseudochr.re.fa.removedup.matrix.clean.txt_clean.txt --family=E:\temp\family.filt.txt --exmatch 0.60 --clmatch 0.92 --spmatch 0.90 -p 0.03 -b 0.03 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 20000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 2 --mode haploid --output E:\temp\shiitake1st".Split(' ');
-                args = @"--fasta=E:\temp\test-shi.fa --vcf=E:\temp\test-shi.clean.txt --precleaned=E:\temp\test-shi.clean.txt --family=E:\temp\family.filt.txt --exmatch 0.60 --clmatch 0.92 --spmatch 0.90 -p 0.03 -b 0.03 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 20000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 2 --mode haploid --output E:\temp\test-shi-out2 --noNewVcf".Split(' ');
+                //args = @"--fasta=E:\temp\scaffolds.fa --vcf=E:\temp\pseudochr.re.fa.removedup.matrix.clean.txt.vcf --precleaned=E:\temp\pseudochr.re.fa.removedup.matrix.clean.txt_clean.txt --family=E:\temp\family.filt.txt --exmatch 0.60 --clmatch 0.92 --spmatch 0.90 -p 0.03 -b 0.03 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 20000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 2 --mode haploid --output E:\temp\shiitake1st2".Split(' ');
+                //args = @"--fasta=E:\temp\test-shi.fa --vcf=E:\temp\test-shi.clean.txt --precleaned=E:\temp\test-shi.clean.txt --family=E:\temp\family.filt.txt --exmatch 0.60 --clmatch 0.92 --spmatch 0.90 -p 0.03 -b 0.03 --NonZeroSampleRate=0.05 --NonZeroPhaseRate=0.1 -r 20000 --RateOfNotNASNP=0.001 --RateOfNotNALD=0.01 --ldseqnum 2 --mode haploid --output E:\temp\test-shi-out2 --noNewVcf".Split(' ');
                 //dotnet publish -c Release -f netcoreapp2.0 -r linux-x64 -o SELDLA/linux-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r win-x64 -o SELDLA/win-x64
                 //dotnet publish -c Release -f netcoreapp2.0 -r osx-x64 -o SELDLA/osx-x64
@@ -218,7 +218,6 @@ namespace SELDLA
                 while ((line = file.ReadLine()) != null)
                 {
                     counter++;
-                    //System.Console.WriteLine(line);
                     if (counter > 1)
                     {
                         string[] temp = line.Split("\t");
@@ -280,7 +279,6 @@ namespace SELDLA
             Dictionary<string, List<int>> breaklist = new Dictionary<string, List<int>>();
             foreach (KeyValuePair<string, SortedDictionary<int, int>> tempbreak in breaks)
             {
-                //Console.WriteLine(tempbreak.Key);
                 bool incl = false;
                 int num_split = 0;
                 int oldkey = 0;
@@ -345,7 +343,6 @@ namespace SELDLA
                 while ((line = ldfile.ReadLine()) != null)
                 {
                     counter++;
-                    //System.Console.WriteLine(line);
                     if (counter == 1)
                     {
                         ldbfile.WriteLine(line);
@@ -392,7 +389,6 @@ namespace SELDLA
                     if (numNR == 0) { line = phfile.ReadLine(); } //ヘッダーを飛ばす
                     numNR++;
                     string[] vals = line.Split("\t");
-                    //Console.WriteLine(line);
                     if (vals[1] != "lowqual" || removelqp != "yes")
                     {
                         if (!datas.ContainsKey(vals[0]))
@@ -421,7 +417,6 @@ namespace SELDLA
                     }
                 }
                 phfile.Close();
-                //Console.WriteLine("test2");
             }
 
             //連鎖するコンティグを伸ばしていく
